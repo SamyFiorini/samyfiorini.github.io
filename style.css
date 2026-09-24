@@ -17,4 +17,12 @@ button:hover,button:focus-visible{background:var(--amber);color:var(--bg);outlin
 #view,#st{color:var(--dim);font-size:15px}
 #dbg{display:none;position:fixed;bottom:8px;left:8px;margin:0;padding:8px;background:#000c;color:#9fd;font:12px/1.4 Consolas,monospace;text-align:left}
 #dbg.on{display:block}
+#nl{display:grid;grid-template-columns:repeat(4,auto);gap:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+@media (max-width:560px){#nl{grid-template-columns:repeat(2,auto)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+button[aria-pressed="true"]{background:var(--amber);color:var(--bg)}
+#mods button{font-size:15px;padding:8px 16px}
+#mm{display:none;position:fixed;right:8px;bottom:8px;background:#000c;padding:0}
+#mm.on{display:block}
+/* ~spread the love~ */
