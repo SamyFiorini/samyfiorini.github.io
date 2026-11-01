@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Chain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --abyss: #030712;
+  --lapis: #274aa6;
+  --lapis-bright: #3f64c8;
+  --lapis-soft: #8ea8e6;
+  --foam: #dbe5fb;
+  --mist: #93a4c9;
+  --dim: #5f7099;
+  --pyrite: #d4af6a;
+  --rose: #d68a9a;
+  --glow: #7fd6c2;
+  --panel: rgba(12, 28, 66, .38);
+  --line: rgba(142, 168, 230, .15);
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --mono: 'DM Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; }
+html { background: var(--abyss); }
+body {
+  min-height: 100vh;
+  color: var(--foam);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  background: linear-gradient(180deg, #0e2352 0%, #091a3e 22%, #06112a 55%, #030712 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: rgba(212, 175, 106, .3); }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.hidden { display: none !important; }
+
+/* ---------- the water ---------- */
+.light {
+  position: fixed;
+  inset: -10% -10% 35% -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 28% 0%, rgba(110, 150, 240, .22), transparent 70%),
+    radial-gradient(40% 45% at 76% 0%, rgba(80, 120, 220, .15), transparent 70%);
+  filter: blur(8px);
+  animation: sway 24s ease-in-out infinite alternate;
+}
+.light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(104deg, transparent 0 70px, rgba(150, 180, 255, .045) 70px 110px, transparent 110px 190px);
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%);
+          mask-image: linear-gradient(180deg, #000, transparent 85%);
+}
+@keyframes sway {
+  from { transform: translateX(-2.5%) skewX(-2deg); }
+  to   { transform: translateX(2.5%) skewX(2deg); }
+}
+#particles {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- layout ---------- */
+.shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 26px 28px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.cols {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 26px;
+}
+.col { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+
+/* one screen, no scrolling, when there is room for it */
+@media (min-width: 900px) and (min-height: 700px) {
+  .shell { height: 100vh; height: 100dvh; min-height: 0; }
+  .feed { max-height: none !important; min-height: 80px !important; }
+}
+
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+.brand h1 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: .01em;
+  color: var(--foam);
+}
+.brand p { margin-top: 6px; font-size: 13px; color: var(--dim); letter-spacing: .02em; }
+.link {
+  color: var(--lapis-soft);
+  font-size: 13px;
+  text-decoration: underline;
+  text-decoration-color: rgba(142, 168, 230, .35);
+  text-underline-offset: 4px;
+  padding-bottom: 2px;
+  transition: color .25s;
+}
+.link:hover { color: var(--foam); }
+
+/* ---------- score ---------- */
+.score {
+  padding: 16px 22px 14px;
+  border-radius: 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.score-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.stat { display: flex; flex-direction: column; align-items: flex-start; }
+.stat span { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); }
+.stat b { font-family: var(--mono); font-weight: 500; font-size: 21px; line-height: 1.3; color: var(--foam); }
+.stat.streak b { color: var(--pyrite); }
+.stat.quiet-stat b { color: var(--mist); }
+.breakdown {
+  min-height: 24px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--dim);
+}
+.breakdown strong { margin-right: 10px; font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--pyrite); }
+
+/* ---------- settings ---------- */
+.settings { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.seg {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.mode-btn {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--mist);
+  transition: color .25s, background .25s;
+  white-space: nowrap;
+}
+.mode-btn:hover { color: var(--foam); }
+.mode-btn.is-active {
+  color: #fff;
+  background: rgba(63, 100, 200, .35);
+  box-shadow: inset 0 0 0 1px rgba(142, 168, 230, .32);
+}
+.opponent { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--dim); }
+.opponent select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--foam);
+  background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%238ea8e6' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 32px 7px 15px;
+  outline: none;
+  cursor: pointer;
+}
+.opponent select:focus { border-color: var(--lapis-soft); }
+.opponent option { background: #0b1d44; color: var(--foam); }
+
+.odds { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+#prob-stage-label { font-size: 12px; color: var(--dim); letter-spacing: .04em; }
+.odds-list { display: flex; gap: 16px; }
+.odd { --w: 0%; min-width: 70px; }
+.odd div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
+.odd span { font-size: 11px; color: var(--dim); }
+.odd b { font-family: var(--mono); font-weight: 500; font-size: 12px; color: var(--lapis-soft); }
+.odd i {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--lapis-bright) var(--w), rgba(142, 168, 230, .12) var(--w));
+  transition: background .6s;
+}
+
+/* ---------- stage ---------- */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px 28px 26px;
+  text-align: center;
+  border-radius: 28px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(63, 100, 200, .24), rgba(11, 29, 68, .36) 60%, rgba(8, 18, 44, .42));
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 255, 255, .05);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.eyebrow { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--dim); }
+.prefix {
+  margin: 10px 0 4px;
+  min-height: 1.1em;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 68px;
+  line-height: 1.1;
+  letter-spacing: .06em;
+  color: var(--pyrite);
+  text-shadow: 0 0 44px rgba(212, 175, 106, .28);
+  transition: color .5s;
+}
+.prefix i { font-style: normal; color: var(--dim); margin-left: .04em; letter-spacing: 0; }
+.prefix.any {
+  font-size: 40px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: .01em;
+  color: var(--lapis-soft);
+  text-shadow: none;
+}
+.prefix-meta { font-size: 13px; color: var(--mist); }
+
+.timer { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 360px; margin: 24px auto 22px; --c: var(--lapis-soft); }
+.track { flex: 1; height: 3px; border-radius: 3px; background: rgba(142, 168, 230, .14); overflow: hidden; }
+.fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 3px;
+  background: var(--c);
+  box-shadow: 0 0 12px var(--c);
+  transition: width 1s linear, background .6s;
+}
+.fill.snap { transition: none; }
+#timer-display { width: 36px; text-align: right; font-family: var(--mono); font-size: 14px; color: var(--c); transition: color .6s; }
+.timer[data-level="warn"] { --c: var(--pyrite); }
+.timer[data-level="low"]  { --c: var(--rose); }
+.timer[data-level="low"] #timer-display { animation: breathe 1s ease-in-out infinite; }
+
+.actions { display: flex; justify-content: center; gap: 12px; }
+.btn { font-weight: 500; border-radius: 999px; padding: 11px 28px; transition: transform .25s, filter .25s, color .25s, border-color .25s; }
+.btn.primary {
+  color: #fff;
+  background: linear-gradient(180deg, #3d62c4, var(--lapis));
+  border: 1px solid rgba(160, 185, 240, .38);
+  box-shadow: 0 10px 30px -12px rgba(63, 100, 200, .8);
+}
+.btn.primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.btn.ghost { color: var(--mist); border: 1px solid var(--line); }
+.btn.ghost:hover:not(:disabled) { color: var(--foam); border-color: rgba(142, 168, 230, .4); }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ---------- chain ---------- */
+.chain { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.chain-head {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 4px 10px;
+  font-size: 11px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+#chain-length-badge { font-family: var(--mono); letter-spacing: .04em; text-transform: none; }
+.feed {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px;
+  min-height: 132px;
+  max-height: 232px;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(3, 8, 20, .46);
+  border: 1px solid rgba(142, 168, 230, .08);
+  box-shadow: inset 0 10px 30px rgba(0, 0, 0, .35);
+}
+.feed::-webkit-scrollbar { width: 6px; }
+.feed::-webkit-scrollbar-thumb { background: rgba(142, 168, 230, .18); border-radius: 6px; }
+.empty {
+  width: 100%;
+  align-self: center;
+  text-align: center;
+  padding: 30px 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--dim);
+}
+.word {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 5px 15px 7px;
+  border-radius: 999px;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.3;
+  letter-spacing: .02em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  animation: rise .7s ease both;
+}
+.word small { flex: none; white-space: nowrap; font-family: var(--sans); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; opacity: .6; }
+.word em { font-style: normal; font-weight: 600; color: var(--pyrite); }
+.word.you { color: var(--foam); background: rgba(63, 100, 200, .28); border: 1px solid rgba(142, 168, 230, .32); }
+.word.ai  { color: var(--mist);  background: rgba(142, 168, 230, .06); border: 1px solid rgba(142, 168, 230, .12); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ---------- status, suggestions, input ---------- */
+.status { min-height: 22px; text-align: center; font-size: 14px; color: var(--mist); transition: opacity .5s, color .4s; }
+.status.quiet { opacity: 0; }
+.status[data-type="error"] { color: var(--rose); }
+.status[data-type="success"] { color: var(--pyrite); }
+
+.sugs {
+  flex: none;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(8, 18, 44, .5);
+  border: 1px solid var(--line);
+}
+.sugs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.sugs-head h3 { font-family: var(--serif); font-weight: 500; font-style: italic; font-size: 19px; color: var(--foam); }
+.sugs-head h3 small { font-family: var(--sans); font-style: normal; font-size: 12px; color: var(--dim); margin-left: 8px; }
+#suggestion-prefix-badge { font-family: var(--mono); font-size: 11px; color: var(--pyrite); }
+.sugs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sug {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border-left: 2px solid var(--c, var(--lapis-soft));
+  background: rgba(142, 168, 230, .05);
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--foam);
+  min-width: 0;
+}
+.sug.easy { --c: #a9c1f0; }
+.sug.mid  { --c: #5d82d6; }
+.sug.hard { --c: var(--pyrite); }
+.sug .n, .sug .len { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.sug .n { width: 18px; }
+.sug .w { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug b { font-weight: 600; color: var(--pyrite); }
+.no-words { grid-column: 1 / -1; color: var(--dim); font-size: 13px; padding: 4px 2px; }
+
+.entry { display: flex; align-items: center; gap: 14px; }
+#player-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 6px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 29px;
+  letter-spacing: .03em;
+  color: var(--foam);
+  caret-color: var(--pyrite);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(142, 168, 230, .26);
+  outline: none;
+  transition: border-color .3s, box-shadow .3s, opacity .3s;
+}
+#player-input::placeholder { color: var(--dim); font-style: italic; letter-spacing: 0; }
+#player-input:focus { border-bottom-color: var(--lapis-soft); box-shadow: 0 12px 24px -18px rgba(111, 150, 240, .9); }
+#player-input:disabled { opacity: .4; cursor: not-allowed; }
+#player-input.bad { border-bottom-color: var(--rose); animation: nudge .35s ease; }
+@keyframes nudge { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+#btn-submit {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--foam);
+  background: rgba(63, 100, 200, .3);
+  border: 1px solid rgba(142, 168, 230, .28);
+  transition: background .25s, transform .25s;
+}
+#btn-submit:hover:not(:disabled) { background: rgba(63, 100, 200, .55); transform: translateX(2px); }
+#btn-submit:disabled { opacity: .35; cursor: not-allowed; }
+
+.dict { text-align: center; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--glow);
+  box-shadow: 0 0 10px rgba(127, 214, 194, .6);
+  vertical-align: 1px;
+}
+.dot.loading { background: var(--pyrite); box-shadow: 0 0 10px rgba(212, 175, 106, .6); animation: breathe 2s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .35; } }
+
+/* ---------- rules ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 16, .7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.sheet {
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 28px 30px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #0f2250, #08173a);
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, .9);
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.sheet h3 { font-family: var(--serif); font-weight: 500; font-size: 26px; }
+#btn-close-modal { color: var(--dim); font-size: 22px; line-height: 1; padding: 2px 6px; transition: color .25s; }
+#btn-close-modal:hover { color: var(--foam); }
+.sheet p { color: var(--mist); font-size: 14px; }
+.sheet p + p { margin-top: 12px; }
+.sheet ul { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 10px; }
+.sheet li { display: flex; align-items: baseline; gap: 12px; font-family: var(--serif); font-size: 19px; color: var(--foam); }
+.sheet li span:first-child { width: 78px; flex: none; font-family: var(--sans); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.tail { color: var(--pyrite); font-weight: 600; }
+.sheet .btn { width: 100%; margin-top: 22px; }
+
+@media (max-width: 899px) {
+  .cols { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .stage { flex: none; }
+  .chain { flex: none; }
+}
+@media (max-width: 560px) {
+  .shell { padding: 22px 16px 16px; }
+  .prefix { font-size: 54px; }
+  .prefix.any { font-size: 34px; }
+  .sugs-grid { grid-template-columns: 1fr; }
+  .odds { flex-direction: column; align-items: flex-start; }
+  .mode-btn { padding: 7px 10px; }
+  .stage { padding: 26px 18px 22px; }
+  .score-row { grid-template-columns: 1fr 1fr; row-gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="light" aria-hidden="true"></div>
+<canvas id="particles" aria-hidden="true"></canvas>
+
+<div class="shell">
+
+  <header class="top">
+    <div class="brand">
+      <h1>Word Chain</h1>
+      <p>version 0.1</p>
+    </div>
+    <button id="btn-how-to-play" class="link" type="button">rules</button>
+  </header>
+
+  <div class="cols">
+
+    <!-- left: where you play -->
+    <div class="col">
+      <section class="stage">
+        <p class="eyebrow">begin with</p>
+        <div id="target-prefix-display" class="prefix any">Any word</div>
+        <p id="target-meta" class="prefix-meta">press start when you are ready</p>
+
+        <div class="timer" id="timer-wrap" data-level="ok">
+          <div class="track"><div id="timer-bar" class="fill"></div></div>
+          <span id="timer-display">20s</span>
+        </div>
+
+        <div class="actions">
+          <button id="btn-start" class="btn primary" type="button">Start</button>
+          <button id="btn-give-up" class="btn ghost" type="button" disabled>Give up</button>
+        </div>
+      </section>
+
+      <section class="score" aria-label="Score">
+        <div class="score-row">
+          <div class="stat"><span>score</span><b id="header-score">0</b></div>
+          <div class="stat streak"><span>streak</span><b id="header-streak">0</b></div>
+          <div class="stat quiet-stat"><span>multiplier</span><b id="header-mult">&times;1.00</b></div>
+          <div class="stat quiet-stat"><span>best</span><b id="header-best">0</b></div>
+        </div>
+        <p id="score-breakdown" class="breakdown">Longer words and unbroken streaks score more.</p>
+      </section>
+
+      <p id="status-message" class="status quiet" role="status" aria-live="polite"></p>
+
+      <form id="word-form" class="entry" autocomplete="off">
+        <input type="text" id="player-input" disabled autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word" aria-label="Your word">
+        <button type="submit" id="btn-submit" disabled aria-label="Submit word">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- right: settings and the chain -->
+    <div class="col">
+      <section class="settings">
+        <div class="seg" role="group" aria-label="Tail length rule">
+          <button type="button" data-rule="weighted" class="mode-btn is-active">Escalating</button>
+          <button type="button" data-rule="1" class="mode-btn">1 letter</button>
+          <button type="button" data-rule="2" class="mode-btn">2 letters</button>
+          <button type="button" data-rule="3" class="mode-btn">3 letters</button>
+        </div>
+        <label class="opponent">
+          <span>opponent</span>
+          <select id="ai-difficulty">
+            <option value="easy">Easy, simple words</option>
+            <option value="medium" selected>Medium, standard</option>
+            <option value="master">Master, long words</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="odds" aria-label="Tail length odds">
+        <span id="prob-stage-label">Phase 1: Warmup (chain 0-99)</span>
+        <div class="odds-list">
+          <div class="odd" id="odd-1"><div><span>1 letter</span><b id="prob-val-1">75%</b></div><i></i></div>
+          <div class="odd" id="odd-2"><div><span>2 letters</span><b id="prob-val-2">20%</b></div><i></i></div>
+          <div class="odd" id="odd-3"><div><span>3 letters</span><b id="prob-val-3">5%</b></div><i></i></div>
+        </div>
+      </section>
+
+      <section class="chain">
+        <div class="chain-head">
+          <span>the chain</span>
+          <span id="chain-length-badge">0 words</span>
+        </div>
+        <div id="chain-feed" class="feed">
+          <div class="empty">The water is still. Press start when you are ready.</div>
+        </div>
+      </section>
+
+      <section id="game-over-suggestions" class="sugs hidden">
+        <div class="sugs-head">
+          <h3>Words that would have worked <small>easiest to hardest</small></h3>
+          <span id="suggestion-prefix-badge"></span>
+        </div>
+        <div id="suggestion-words-list" class="sugs-grid"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <div id="dictionary-status" class="dict"><span class="dot loading"></span>loading dictionary</div>
+</div>
+
+<div id="modal-instructions" class="modal hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>How it works</h3>
+      <button id="btn-close-modal" type="button" aria-label="Close">&times;</button>
+    </div>
+    <p>Each word has to begin with the letters the last word ended on. Those letters are already typed for you.</p>
+    <ul>
+      <li><span>1 letter</span><span>lio<span class="tail">n</span> &rarr; <span class="tail">n</span>ight</span></li>
+      <li><span>2 letters</span><span>drag<span class="tail">on</span> &rarr; <span class="tail">on</span>line</span></li>
+      <li><span>3 letters</span><span>compu<span class="tail">ter</span> &rarr; <span class="tail">ter</span>rain</span></li>
+    </ul>
+    <p>In escalating mode the water gets deeper as the chain grows. Past 100 words, two and three letter tails become common, and past 250 they take over.</p>
+    <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, counted up to 20 letters. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, up to &times;3. The streak resets when a match ends.</p>
+    <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
+  </div>
+</div>
+
+<script>
+/* ---------- drifting specks (marine snow, with the odd fleck of gold) ---------- */
+(function () {
+  const c = document.getElementById('particles');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let w = 0, h = 0, specks = [];
+
+  function make(anywhere) {
+    return {
+      x: Math.random() * w,
+      y: anywhere ? Math.random() * h : h + 10,
+      r: Math.random() * 1.4 + 0.3,
+      v: Math.random() * 0.12 + 0.03,
+      d: Math.random() * Math.PI * 2,
+      a: Math.random() * 0.35 + 0.08,
+      gold: Math.random() < 0.07
+    };
+  }
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth;
+    h = window.innerHeight;
+    c.width = w * dpr;
+    c.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    specks = Array.from({ length: Math.round((w * h) / 18000) }, () => make(true));
+  }
+  function frame(t) {
+    ctx.clearRect(0, 0, w, h);
+    for (const s of specks) {
+      s.y -= s.v;
+      s.x += Math.sin(t / 4000 + s.d) * 0.12;
+      if (s.y < -10) Object.assign(s, make(false));
+      ctx.beginPath();
+      ctx.fillStyle = s.gold ? `rgba(212,175,106,${s.a + 0.1})` : `rgba(190,210,255,${s.a})`;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+/* ---------- game state ---------- */
+let dictionarySet = new Set();
+let dictionaryArray = [];
+let commonWordsSet = new Set();
+let usedWords = new Set();
+let currentRule = "weighted";
+let activeTailLength = 1;
+let requiredPrefix = "";
+let turnTimer = null;
+const TURN_SECONDS = 20;
+let timeLeft = TURN_SECONDS;
+let isPlayerTurn = true;
+let score = 0;
+let streak = 0;
+let isGameActive = false;
+let aiDifficulty = "medium";
+
+const EMPTY_HTML = '<div class="empty">The water is still. Press start when you are ready.</div>';
+
+/* ---------- elements ---------- */
+const playerInput = document.getElementById('player-input');
+const wordForm = document.getElementById('word-form');
+const btnSubmit = document.getElementById('btn-submit');
+const btnStart = document.getElementById('btn-start');
+const btnGiveUp = document.getElementById('btn-give-up');
+const targetPrefixDisplay = document.getElementById('target-prefix-display');
+const targetMeta = document.getElementById('target-meta');
+const timerDisplay = document.getElementById('timer-display');
+const timerBar = document.getElementById('timer-bar');
+const timerWrap = document.getElementById('timer-wrap');
+const chainFeed = document.getElementById('chain-feed');
+const statusMessage = document.getElementById('status-message');
+const dictionaryStatus = document.getElementById('dictionary-status');
+const headerScore = document.getElementById('header-score');
+const headerStreak = document.getElementById('header-streak');
+const chainLengthBadge = document.getElementById('chain-length-badge');
+const modeBtns = document.querySelectorAll('.mode-btn');
+const aiDifficultySelect = document.getElementById('ai-difficulty');
+const probStageLabel = document.getElementById('prob-stage-label');
+const gameOverSuggestions = document.getElementById('game-over-suggestions');
+const suggestionWordsList = document.getElementById('suggestion-words-list');
+const suggestionPrefixBadge = document.getElementById('suggestion-prefix-badge');
+const modalInstructions = document.getElementById('modal-instructions');
+const btnHowToPlay = document.getElementById('btn-how-to-play');
+const btnCloseModal = document.getElementById('btn-close-modal');
+const btnModalOk = document.getElementById('btn-modal-ok');
+
+/* ---------- words ---------- */
+const topCommonWords = ["the","be","to","of","and","a","in","that","have","i","it","for","not","on","with","he","as","you","do","at","this","but","his","by","from","they","we","say","her","she","or","an","will","my","one","all","would","there","their","what","so","up","out","if","about","who","get","which","go","me","when","make","can","like","time","no","just","him","know","take","people","into","year","your","good","some","could","them","see","other","than","then","now","look","only","come","its","over","think","also","back","after","use","two","how","our","work","first","well","way","even","new","want","because","any","these","give","day","most","us","ear","elf","elephant","orange","apple","dragon","onion","online","ring","river","water","yellow","ghost","tree","engine","game","king","time","yard","earth","hero","wave","element","tiger","rabbit","train","nest","turtle","eagle","monster","terrain"];
+
+function getWordComplexity(word) {
+  let s = word.length * 10;
+  if (commonWordsSet.has(word)) s -= 35;
+  const rareLetters = (word.match(/[qzxj]/g) || []).length;
+  s += rareLetters * 15;
+  return Math.max(1, s);
+}
+
+const builtInFallbackWords = [
+  "apple","ant","anchor","album","artist","arrow","angel","animal",
+  "bear","ball","book","bird","boat","bridge","banana","butter","brain",
+  "cat","car","city","cloud","crown","clock","camel","coffee","castle",
+  "dog","duck","door","dragon","doctor","desk","driver","diamond",
+  "ear","elf","elephant","eagle","earth","engine","energy","egg","element",
+  "fox","fish","fire","flower","forest","feather","fruit","frog",
+  "ghost","game","green","garden","giant","glass","gold","grape",
+  "hero","horse","house","heart","honey","hammer","hill","hospital",
+  "iron","ice","island","insect","item","image","ink","ivory",
+  "jungle","jewel","jacket","juice","journey","judge","jet",
+  "king","kite","key","kitchen","knight","kangaroo",
+  "lion","lamp","leaf","lemon","lizard","letter","library","light",
+  "monster","moon","monkey","mountain","music","mirror","magic","market",
+  "nest","night","needle","number","nature","notebook","nerve",
+  "orange","onion","online","owl","ocean","office","orbit","otter",
+  "pencil","paper","planet","park","python","palace","pepper","piano",
+  "queen","quartz","quick","quiet","quill",
+  "rabbit","river","ring","robot","rocket","rainbow","radio","rose",
+  "sun","star","snake","silver","spider","shadow","shield","school",
+  "tiger","turtle","train","tree","terrain","tower","tunnel",
+  "umbrella","uncle","unit","universe","urban",
+  "valley","volcano","village","violin","vault","vector",
+  "water","wave","wind","wolf","wizard","wheel","weapon",
+  "xenon","xylophone",
+  "yellow","yard","yacht","yeast","yogurt",
+  "zebra","zero","zoo","zone"
+];
+
+function setDictStatus(html) {
+  if (dictionaryStatus) dictionaryStatus.innerHTML = html;
+}
+
+async function loadDictionary() {
+  try {
+    commonWordsSet = new Set(topCommonWords);
+    dictionaryArray = [...builtInFallbackWords];
+    dictionarySet = new Set(dictionaryArray);
+    dictionaryArray.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
+
+    if (btnStart) btnStart.disabled = false;
+    setDictStatus('<span class="dot loading"></span>loading the full dictionary');
+
+    const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words.txt');
+    if (!response.ok) throw new Error("Network response error");
+    const text = await response.text();
+
+    // everything is accepted from you (names and places included),
+    // but the AI and the suggestions only draw from the plain lowercase words
+    const everything = new Set(builtInFallbackWords);
+    const plain = new Set(builtInFallbackWords);
+    for (const raw of text.split(/\r?\n/)) {
+      const w = raw.trim();
+      if (w.length < 2 || !/^[A-Za-z]+$/.test(w)) continue;
+      const lower = w.toLowerCase();
+      everything.add(lower);
+      if (w === lower) plain.add(lower);
+    }
+
+    dictionarySet = everything;
+    dictionaryArray = [...plain];
+    dictionaryArray.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
+
+    setDictStatus(`<span class="dot"></span>${everything.size.toLocaleString()} words ready, plus online lookup for the rest`);
+  } catch (err) {
+    console.warn("Using built-in local dictionary fallback:", err);
+    dictionaryArray = [...builtInFallbackWords];
+    dictionarySet = new Set(dictionaryArray);
+    setDictStatus(`<span class="dot"></span>${dictionaryArray.length} words ready (offline set)`);
+    if (btnStart) btnStart.disabled = false;
+  }
+}
+
+/* ---------- settings ---------- */
+if (aiDifficultySelect) {
+  aiDifficultySelect.addEventListener('change', (e) => {
+    aiDifficulty = e.target.value;
+  });
+}
+
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (isGameActive && usedWords.size > 0) {
+      if (!confirm("Changing the rule will restart the match. Continue?")) return;
+    }
+    modeBtns.forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+
+    currentRule = btn.dataset.rule;
+    if (isGameActive) resetGame();
+    else updateProbabilityUI();
+  });
+});
+
+function getProbabilities() {
+  const chainLength = usedWords.size;
+  if (chainLength < 100) {
+    return { stage: "Phase 1: Warmup (chain 0-99)", p1: 75, p2: 20, p3: 5 };
+  } else if (chainLength < 250) {
+    return { stage: "Phase 2: Escalating (chain 100-249)", p1: 30, p2: 50, p3: 20 };
+  } else {
+    return { stage: "Phase 3: High intensity (chain 250+)", p1: 10, p2: 35, p3: 55 };
+  }
+}
+
+function setOdds(p1, p2, p3) {
+  [[1, p1], [2, p2], [3, p3]].forEach(([n, v]) => {
+    const val = document.getElementById('prob-val-' + n);
+    const box = document.getElementById('odd-' + n);
+    if (val) val.textContent = v + '%';
+    if (box) box.style.setProperty('--w', v + '%');
+  });
+}
+
+function updateProbabilityUI() {
+  if (currentRule !== 'weighted') {
+    const n = parseInt(currentRule);
+    if (probStageLabel) probStageLabel.textContent = `Fixed at ${n} letter${n === 1 ? '' : 's'}`;
+    setOdds(n === 1 ? 100 : 0, n === 2 ? 100 : 0, n === 3 ? 100 : 0);
+    return;
+  }
+  const p = getProbabilities();
+  if (probStageLabel) probStageLabel.textContent = p.stage;
+  setOdds(p.p1, p.p2, p.p3);
+}
+
+function calculateNextTailLength(lastWord) {
+  if (!lastWord) return 1;
+
+  let targetLen = 1;
+  if (currentRule !== 'weighted') {
+    targetLen = parseInt(currentRule);
+  } else {
+    const p = getProbabilities();
+    const roll = Math.random() * 100;
+    if (roll < p.p1) targetLen = 1;
+    else if (roll < p.p1 + p.p2) targetLen = 2;
+    else targetLen = 3;
+  }
+
+  targetLen = Math.min(targetLen, Math.max(1, lastWord.length - 1));
+
+  while (targetLen > 1) {
+    const prefix = lastWord.slice(-targetLen);
+    const candidateCount = dictionaryArray.filter(w =>
+      w.startsWith(prefix) && !usedWords.has(w) && w.length > targetLen
+    ).length;
+
+    if (candidateCount > 0) break;
+    targetLen--;
+  }
+
+  return targetLen;
+}
+
+/* ---------- game flow ---------- */
+function startGame() {
+  usedWords.clear();
+  score = 0;
+  streak = 0;
+  requiredPrefix = "";
+  activeTailLength = 1;
+  isGameActive = true;
+  isPlayerTurn = true;
+
+  updateScoreboard();
+  if (chainFeed) chainFeed.innerHTML = '';
+  if (chainLengthBadge) chainLengthBadge.textContent = '0 words';
+  if (statusMessage) statusMessage.classList.add('quiet');
+  if (gameOverSuggestions) gameOverSuggestions.classList.add('hidden');
+
+  if (playerInput) {
+    playerInput.disabled = false;
+    playerInput.value = '';
+    playerInput.focus();
+  }
+  if (btnSubmit) btnSubmit.disabled = false;
+  if (btnGiveUp) btnGiveUp.disabled = false;
+
+  updateProbabilityUI();
+  updateTargetDisplay();
+  startTimer();
+  resetBreakdown();
+  showStatus("Type any word to open the chain.", "info");
+}
+
+function resetGame() {
+  clearInterval(turnTimer);
+  isGameActive = false;
+  requiredPrefix = "";
+  if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
+  if (btnSubmit) btnSubmit.disabled = true;
+  if (btnGiveUp) btnGiveUp.disabled = true;
+  if (chainFeed) chainFeed.innerHTML = EMPTY_HTML;
+  if (chainLengthBadge) chainLengthBadge.textContent = '0 words';
+  if (gameOverSuggestions) gameOverSuggestions.classList.add('hidden');
+  if (statusMessage) statusMessage.classList.add('quiet');
+  usedWords.clear();
+  updateTargetDisplay();
+  timeLeft = TURN_SECONDS;
+  if (timerBar) timerBar.classList.add('snap');
+  updateTimerDisplay();
+  if (timerBar) { void timerBar.offsetWidth; timerBar.classList.remove('snap'); }
+  updateProbabilityUI();
+}
+
+function startTimer() {
+  clearInterval(turnTimer);
+  timeLeft = TURN_SECONDS;
+  if (timerBar) timerBar.classList.add('snap');
+  updateTimerDisplay();
+  if (timerBar) { void timerBar.offsetWidth; timerBar.classList.remove('snap'); }
+
+  turnTimer = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(turnTimer);
+      handleTimeOut();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  if (timerDisplay) timerDisplay.textContent = `${timeLeft}s`;
+  if (timerBar) timerBar.style.width = `${Math.max(0, (timeLeft / TURN_SECONDS) * 100)}%`;
+  if (timerWrap) timerWrap.dataset.level = timeLeft <= 5 ? 'low' : timeLeft <= 10 ? 'warn' : 'ok';
+}
+
+function handleTimeOut() {
+  if (isPlayerTurn) {
+    gameOver("Time ran out.");
+  } else {
+    playerWins("The AI ran out of time.");
+  }
+}
+
+if (wordForm) {
+  wordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isGameActive || !isPlayerTurn) return;
+
+    const word = playerInput.value.trim().toLowerCase();
+    if (!word) return;
+
+    if (requiredPrefix && !word.startsWith(requiredPrefix)) {
+      showStatus(`The word has to start with "${requiredPrefix.toUpperCase()}".`, "error");
+      shakeInput();
+      return;
+    }
+
+    if (word.length <= activeTailLength) {
+      showStatus(`The word has to be longer than ${activeTailLength} letter${activeTailLength === 1 ? '' : 's'}.`, "error");
+      shakeInput();
+      return;
+    }
+
+    if (usedWords.has(word)) {
+      showStatus(`"${word.toUpperCase()}" was already played in this match.`, "error");
+      shakeInput();
+      return;
+    }
+
+    if (!dictionarySet.has(word)) {
+      if (checkingOnline) return;
+      checkingOnline = true;
+      showStatus(`Looking up "${word.toUpperCase()}" online...`, "info");
+      const found = await existsOnline(word);
+      checkingOnline = false;
+      if (!isGameActive || !isPlayerTurn) return;
+      if (found === null) {
+        showStatus("Could not reach the online dictionary to check that word.", "error");
+        shakeInput();
+        return;
+      }
+      if (!found) {
+        showStatus(`"${word.toUpperCase()}" is not in the dictionary.`, "error");
+        shakeInput();
+        return;
+      }
+      dictionarySet.add(word);
+    }
+
+    playWord(word, "Player");
+    playerInput.value = '';
+
+    if (isGameActive) {
+      isPlayerTurn = false;
+      playerInput.disabled = true;
+      btnSubmit.disabled = true;
+      showStatus("The AI is thinking...", "info");
+
+      const delay = Math.floor(Math.random() * 800) + 600;
+      setTimeout(aiPlayTurn, delay);
+    }
+  });
+}
+
+function playWord(word, player) {
+  usedWords.add(word);
+
+  // score against the tail the word had to match, before the next one is chosen
+  if (player === "Player") {
+    const r = scoreWord(word, requiredPrefix ? requiredPrefix.length : 1, streak);
+    score += r.total;
+    streak++;
+    showBreakdown(r);
+  }
+
+  activeTailLength = calculateNextTailLength(word);
+  requiredPrefix = word.slice(-activeTailLength);
+
+  updateScoreboard();
+  updateProbabilityUI();
+  appendChainBadge(word, player);
+  updateTargetDisplay();
+
+  startTimer();
+}
+
+function aiPlayTurn() {
+  if (!isGameActive) return;
+
+  const candidates = dictionaryArray.filter(w =>
+    w.startsWith(requiredPrefix) &&
+    !usedWords.has(w) &&
+    w.length > activeTailLength
+  );
+
+  if (candidates.length === 0) {
+    playerWins(`The AI could not find a word starting with "${requiredPrefix.toUpperCase()}".`);
+    return;
+  }
+
+  candidates.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
+
+  let selectedWord = "";
+  if (aiDifficulty === "easy") {
+    const pool = candidates.slice(0, Math.min(candidates.length, 5));
+    selectedWord = pool[Math.floor(Math.random() * pool.length)];
+  } else if (aiDifficulty === "medium") {
+    const pool = candidates.slice(0, Math.min(candidates.length, 15));
+    selectedWord = pool[Math.floor(Math.random() * pool.length)];
+  } else {
+    const pool = candidates.slice(0, Math.min(candidates.length, 30));
+    pool.sort((a, b) => b.length - a.length);
+    selectedWord = pool[0];
+  }
+
+  playWord(selectedWord, "AI");
+
+  isPlayerTurn = true;
+  if (playerInput) playerInput.disabled = false;
+  if (btnSubmit) btnSubmit.disabled = false;
+  prepareInput();
+  showStatus("Your turn.", "info");
+}
+
+/* ---------- online lookup for words the list does not have ---------- */
+const onlineCache = new Map();
+let checkingOnline = false;
+
+// true = English Wiktionary has it, false = it does not, null = could not reach it
+async function existsOnline(word) {
+  if (onlineCache.has(word)) return onlineCache.get(word);
+  try {
+    const cap = word.charAt(0).toUpperCase() + word.slice(1);
+    const url = 'https://en.wiktionary.org/w/api.php?action=query&format=json&origin=*&prop=categories&cllimit=50'
+      + '&clcategories=' + encodeURIComponent('Category:English lemmas|Category:English non-lemma forms')
+      + '&titles=' + encodeURIComponent(word + '|' + cap);
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pages = Object.values((data.query && data.query.pages) || {});
+    const found = pages.some(pg => !('missing' in pg) && Array.isArray(pg.categories) && pg.categories.length > 0);
+    onlineCache.set(word, found);
+    return found;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ---------- scoring ---------- */
+let best = 0;
+try { best = parseInt(localStorage.getItem('wordchain-best') || '0', 10) || 0; } catch (e) {}
+
+function streakMultiplier(n) {
+  return 1 + Math.min(n, 40) * 0.05;
+}
+
+function scoreWord(word, tail, streakBefore) {
+  const base = word.length * 10;
+  const extra = Math.max(0, Math.min(word.length, 20) - 5);
+  const lengthBonus = extra * extra * 10;
+  const tailMult = 1 + (tail - 1) * 0.5;
+  const streakMult = streakMultiplier(streakBefore);
+  const total = Math.round((base + lengthBonus) * tailMult * streakMult);
+  return { base, lengthBonus, tailMult, streakMult, total };
+}
+
+function showBreakdown(r) {
+  const el = document.getElementById('score-breakdown');
+  if (!el) return;
+  const parts = [`word ${r.base}`];
+  if (r.lengthBonus) parts.push(`long word +${r.lengthBonus}`);
+  if (r.tailMult > 1) parts.push(`tail \u00d7${r.tailMult}`);
+  if (r.streakMult > 1) parts.push(`streak \u00d7${r.streakMult.toFixed(2)}`);
+  el.innerHTML = `<strong>+${r.total.toLocaleString()}</strong>${parts.join(' \u00b7 ')}`;
+}
+
+function resetBreakdown() {
+  const el = document.getElementById('score-breakdown');
+  if (el) el.textContent = 'Longer words and unbroken streaks score more.';
+}
+
+/* ---------- the letters you already owe ---------- */
+function prepareInput() {
+  if (!playerInput) return;
+  playerInput.value = requiredPrefix;
+  playerInput.focus();
+  const n = playerInput.value.length;
+  try { playerInput.setSelectionRange(n, n); } catch (e) {}
+}
+
+if (playerInput) {
+  playerInput.addEventListener('input', () => {
+    if (!isGameActive || !isPlayerTurn || !requiredPrefix) return;
+    let v = playerInput.value.toLowerCase();
+    if (!v.startsWith(requiredPrefix)) {
+      v = requiredPrefix.startsWith(v) ? requiredPrefix : requiredPrefix + v;
+    }
+    if (v !== playerInput.value) playerInput.value = v;
+  });
+}
+
+/* ---------- drawing the chain ---------- */
+function appendChainBadge(word, player) {
+  if (!chainFeed) return;
+  const placeholder = chainFeed.querySelector('.empty');
+  if (placeholder) placeholder.remove();
+
+  const isPlayer = player === "Player";
+  const badge = document.createElement('div');
+  badge.className = `word ${isPlayer ? 'you' : 'ai'}`;
+
+  const mainPart = word.slice(0, word.length - activeTailLength);
+  const tailPart = word.slice(-activeTailLength);
+
+  badge.innerHTML = `<small>${isPlayer ? 'you' : 'ai'}</small><span>${mainPart}<em>${tailPart}</em></span>`;
+
+  chainFeed.appendChild(badge);
+  chainFeed.scrollTop = chainFeed.scrollHeight;
+  if (chainLengthBadge) chainLengthBadge.textContent = `${usedWords.size} word${usedWords.size === 1 ? '' : 's'}`;
+}
+
+function updateTargetDisplay() {
+  if (!targetPrefixDisplay) return;
+  if (!requiredPrefix) {
+    targetPrefixDisplay.textContent = "Any word";
+    targetPrefixDisplay.classList.add('any');
+    if (targetMeta) targetMeta.textContent = isGameActive ? "any word will open the chain" : "press start when you are ready";
+  } else {
+    targetPrefixDisplay.classList.remove('any');
+    targetPrefixDisplay.innerHTML = `${requiredPrefix.toUpperCase()}<i>&hellip;</i>`;
+    if (targetMeta) targetMeta.textContent = `${activeTailLength} letter${activeTailLength === 1 ? '' : 's'} to match`;
+  }
+}
+
+function updateScoreboard() {
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem('wordchain-best', String(best)); } catch (e) {}
+  }
+  if (headerScore) headerScore.textContent = score.toLocaleString();
+  if (headerStreak) headerStreak.textContent = streak;
+  const mult = document.getElementById('header-mult');
+  const bestEl = document.getElementById('header-best');
+  if (mult) mult.textContent = '\u00d7' + streakMultiplier(streak).toFixed(2);
+  if (bestEl) bestEl.textContent = best.toLocaleString();
+}
+
+function showStatus(text, type) {
+  if (!statusMessage) return;
+  statusMessage.classList.remove('quiet');
+  statusMessage.dataset.type = type || 'info';
+  statusMessage.textContent = text;
+}
+
+function shakeInput() {
+  if (!playerInput) return;
+  playerInput.classList.remove('bad');
+  void playerInput.offsetWidth;
+  playerInput.classList.add('bad');
+  setTimeout(() => playerInput.classList.remove('bad'), 700);
+}
+
+/* ---------- endings ---------- */
+function gameOver(reason) {
+  clearInterval(turnTimer);
+  isGameActive = false;
+  if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
+  if (btnSubmit) btnSubmit.disabled = true;
+  if (btnGiveUp) btnGiveUp.disabled = true;
+  streak = 0;
+  updateScoreboard();
+  showStatus(`Game over. ${reason}`, "error");
+  showGameOverSuggestions();
+}
+
+function showGameOverSuggestions() {
+  if (!gameOverSuggestions || !requiredPrefix) return;
+
+  const candidates = dictionaryArray.filter(w =>
+    w.startsWith(requiredPrefix) &&
+    !usedWords.has(w) &&
+    w.length > activeTailLength
+  );
+
+  if (suggestionPrefixBadge) suggestionPrefixBadge.textContent = `${requiredPrefix.toUpperCase()} \u00b7 ${activeTailLength} letter${activeTailLength === 1 ? '' : 's'}`;
+  if (suggestionWordsList) suggestionWordsList.innerHTML = '';
+
+  if (candidates.length === 0) {
+    if (suggestionWordsList) suggestionWordsList.innerHTML = '<div class="no-words">No valid words were left in the dictionary.</div>';
+  } else {
+    candidates.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
+
+    const total = candidates.length;
+    const sampled = [];
+
+    if (total <= 10) {
+      sampled.push(...candidates);
+    } else {
+      for (let i = 0; i < 10; i++) {
+        const index = Math.floor((i / 9) * (total - 1));
+        sampled.push(candidates[index]);
+      }
+    }
+
+    sampled.forEach((word, idx) => {
+      const tier = idx < 3 ? 'easy' : idx >= 7 ? 'hard' : 'mid';
+      const prefixPart = word.slice(0, requiredPrefix.length);
+      const restPart = word.slice(requiredPrefix.length);
+
+      const item = document.createElement('div');
+      item.className = `sug ${tier}`;
+      item.innerHTML = `<span class="n">${idx + 1}</span><span class="w"><b>${prefixPart}</b>${restPart}</span><span class="len">${word.length}</span>`;
+      if (suggestionWordsList) suggestionWordsList.appendChild(item);
+    });
+  }
+
+  gameOverSuggestions.classList.remove('hidden');
+  if (window.innerWidth < 900) gameOverSuggestions.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function playerWins(reason) {
+  clearInterval(turnTimer);
+  isGameActive = false;
+  if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
+  if (btnSubmit) btnSubmit.disabled = true;
+  if (btnGiveUp) btnGiveUp.disabled = true;
+  score += 500;
+  updateScoreboard();
+  showStatus(`You win. ${reason}`, "success");
+}
+
+/* ---------- buttons ---------- */
+if (btnGiveUp) {
+  btnGiveUp.addEventListener('click', () => {
+    if (isGameActive && confirm("Are you sure you want to give up this match?")) {
+      gameOver("You gave up.");
+    }
+  });
+}
+if (btnStart) btnStart.addEventListener('click', startGame);
+
+function toggleModal(show) {
+  if (modalInstructions) modalInstructions.classList.toggle('hidden', !show);
+}
+if (btnHowToPlay) btnHowToPlay.addEventListener('click', () => toggleModal(true));
+if (btnCloseModal) btnCloseModal.addEventListener('click', () => toggleModal(false));
+if (btnModalOk) btnModalOk.addEventListener('click', () => toggleModal(false));
+if (modalInstructions) {
+  modalInstructions.addEventListener('click', (e) => { if (e.target === modalInstructions) toggleModal(false); });
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleModal(false); });
+
+/* ---------- go ---------- */
+updateScoreboard();
+updateProbabilityUI();
+updateTargetDisplay();
+loadDictionary();
+</script>
+</body>
+</html>
