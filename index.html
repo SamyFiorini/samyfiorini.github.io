@@ -128,10 +128,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: var(--panel);
   border: 1px solid var(--line);
 }
-.score-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.score-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .stat { display: flex; flex-direction: column; align-items: flex-start; }
 .stat span { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); }
-.stat b { font-family: var(--mono); font-weight: 500; font-size: 21px; line-height: 1.3; color: var(--foam); }
+.stat b { font-family: var(--mono); font-weight: 500; font-size: 19px; line-height: 1.3; color: var(--foam); }
+.stat small { font-family: var(--mono); font-size: 10.5px; line-height: 1.3; color: var(--dim); }
 .stat.streak b { color: var(--pyrite); }
 .stat.quiet-stat b { color: var(--mist); }
 .breakdown {
@@ -529,7 +530,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.3</p>
+      <p>version 0.4</p>
     </div>
     <button id="btn-how-to-play" class="link" type="button">rules</button>
   </header>
@@ -563,7 +564,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
           <div class="stat"><span>score</span><b id="header-score">0</b></div>
           <div class="stat streak"><span>streak</span><b id="header-streak">0</b></div>
           <div class="stat quiet-stat"><span>multiplier</span><b id="header-mult">&times;1.00</b></div>
-          <div class="stat quiet-stat"><span>best</span><b id="header-best">0</b></div>
+          <div class="stat quiet-stat"><span>best score</span><b id="header-best">0</b><small id="best-score-sub"></small></div>
+          <div class="stat quiet-stat"><span>best streak</span><b id="header-best-streak">0</b><small id="best-streak-sub"></small></div>
         </div>
         <p id="score-breakdown" class="breakdown">Longer words and unbroken streaks score more.</p>
       </section>
@@ -603,7 +605,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       </section>
 
       <section class="odds" aria-label="Tail length odds">
-        <span id="prob-stage-label">Phase 1: Warmup (chain 0-99)</span>
+        <span id="prob-stage-label">Phase 1: Warmup (streak 0-49)</span>
         <div class="odds-list">
           <div class="odd" id="odd-1"><div><span>1 letter</span><b id="prob-val-1">75%</b></div><i></i></div>
           <div class="odd" id="odd-2"><div><span>2 letters</span><b id="prob-val-2">20%</b></div><i></i></div>
@@ -647,7 +649,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <li><span>2 letters</span><span>drag<span class="tail">on</span> &rarr; <span class="tail">on</span>line</span></li>
       <li><span>3 letters</span><span>compu<span class="tail">ter</span> &rarr; <span class="tail">ter</span>rain</span></li>
     </ul>
-    <p>In escalating mode the water gets deeper as the chain grows. Past 100 words, two and three letter tails become common, and past 250 they take over.</p>
+    <p>In escalating mode the water gets deeper as your streak grows. Past a streak of 50, two and three letter tails become common, and past 150 they take over.</p>
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
     <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
@@ -936,13 +938,12 @@ modeBtns.forEach(btn => {
 });
 
 function getProbabilities() {
-  const chainLength = usedWords.size;
-  if (chainLength < 100) {
-    return { stage: "Phase 1: Warmup (chain 0-99)", p1: 75, p2: 20, p3: 5 };
-  } else if (chainLength < 250) {
-    return { stage: "Phase 2: Escalating (chain 100-249)", p1: 30, p2: 50, p3: 20 };
+  if (streak < 50) {
+    return { stage: "Phase 1: Warmup (streak 0-49)", p1: 75, p2: 20, p3: 5 };
+  } else if (streak < 150) {
+    return { stage: "Phase 2: Escalating (streak 50-149)", p1: 30, p2: 50, p3: 20 };
   } else {
-    return { stage: "Phase 3: High intensity (chain 250+)", p1: 10, p2: 35, p3: 55 };
+    return { stage: "Phase 3: High intensity (streak 150+)", p1: 10, p2: 35, p3: 55 };
   }
 }
 
@@ -1270,8 +1271,34 @@ async function existsOnline(word) {
 }
 
 /* ---------- scoring ---------- */
-let best = 0;
-try { best = parseInt(localStorage.getItem('wordchain-best') || '0', 10) || 0; } catch (e) {}
+// best score remembers the streak it came with, best streak remembers its score
+let records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
+try {
+  const saved = JSON.parse(localStorage.getItem('wordchain-records') || 'null');
+  if (saved && saved.score && saved.streak) {
+    records = saved;
+  } else {
+    const old = parseInt(localStorage.getItem('wordchain-best') || '0', 10) || 0;   // the older single best score
+    if (old) records.score = { score: old, streak: null };
+  }
+} catch (e) {}
+
+function updateRecords() {
+  let changed = false;
+  const rs = records.score;
+  if (score > rs.score || (score > 0 && score === rs.score && streak > (rs.streak === null ? -1 : rs.streak))) {
+    records.score = { score, streak };
+    changed = true;
+  }
+  const rk = records.streak;
+  if (streak > 0 && (streak > rk.streak || (streak === rk.streak && score > (rk.score === null ? -1 : rk.score)))) {
+    records.streak = { streak, score };
+    changed = true;
+  }
+  if (changed) {
+    try { localStorage.setItem('wordchain-records', JSON.stringify(records)); } catch (e) {}
+  }
+}
 
 function streakMultiplier(n) {
   return 1 + n * 0.05;
@@ -1395,16 +1422,15 @@ function updateTargetDisplay() {
 }
 
 function updateScoreboard() {
-  if (score > best) {
-    best = score;
-    try { localStorage.setItem('wordchain-best', String(best)); } catch (e) {}
-  }
+  updateRecords();
   if (headerScore) headerScore.textContent = score.toLocaleString();
   if (headerStreak) headerStreak.textContent = streak;
-  const mult = document.getElementById('header-mult');
-  const bestEl = document.getElementById('header-best');
-  if (mult) mult.textContent = '\u00d7' + streakMultiplier(streak).toFixed(2);
-  if (bestEl) bestEl.textContent = best.toLocaleString();
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set('header-mult', '\u00d7' + streakMultiplier(streak).toFixed(2));
+  set('header-best', records.score.score.toLocaleString());
+  set('best-score-sub', records.score.score > 0 && records.score.streak !== null ? `streak ${records.score.streak.toLocaleString()}` : '');
+  set('header-best-streak', records.streak.streak.toLocaleString());
+  set('best-streak-sub', records.streak.streak > 0 && records.streak.score !== null ? `score ${records.streak.score.toLocaleString()}` : '');
 }
 
 function showStatus(text, type) {

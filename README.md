@@ -8,7 +8,7 @@ A deep ocean themed word game. Each word has to start with the letters the last 
 - The matching letters are already typed for you. The word can be just those letters, like `me` after `so`**`me`**.
 - You have 20 seconds per turn. No word can be used twice in a match.
 - You get 5 tries per word, shown as five bubbles. Every word that is not in the dictionary pops one, and losing all five ends the match. Wrong starting letters, words already used and failed online lookups do not cost a bubble.
-- **Escalating** mode makes longer matches (2 and 3 letters) more common as the chain grows. You can also fix the match at 1, 2 or 3 letters.
+- **Escalating** mode makes longer matches (2 and 3 letters) more common as your streak grows: they become common from a streak of 50 and take over from 150. You can also fix the match at 1, 2 or 3 letters.
 
 ### Scoring
 
@@ -16,7 +16,7 @@ A deep ocean themed word game. Each word has to start with the letters the last 
 - Words longer than 5 letters earn a growing bonus, with no limit.
 - Matching 2 letters multiplies the word by 1.5, and 3 letters by 2.
 - Each word in a row adds 0.05 to a streak multiplier, with no upper limit.
-- Your best score is saved in your browser.
+- Your best score and best streak are saved in your browser. Each one shows the other number from the same match, since the longest streak is not always the highest score.
 
 ### Opponents
 
