@@ -38,8 +38,8 @@ A deep ocean themed word game. Each word has to start with the letters the last 
 | File | What it is |
 | --- | --- |
 | `index.html` | The whole game: page, styles and script. |
-| `words.txt` | Accepted words (ENABLE word list, about 173,000 words). |
-| `common.txt` | Everyday words ranked by frequency, used by the AI and "common words only". |
+| `words.txt` | Accepted words (ENABLE word list, 172,823 words). |
+| `common.txt` | Everyday words ranked by frequency (32,542 words), used by the AI and "common words only". |
 
 Words that are not in `words.txt` (names, places, newer words) are checked against English Wiktionary. The clock waits during that lookup, up to 6 seconds per turn.
 
