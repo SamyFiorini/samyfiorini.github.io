@@ -335,28 +335,27 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .sugs {
   flex: none;
-  max-height: 260px;
-  overflow-y: auto;
-  padding: 18px 20px;
+  padding: 14px 18px;
   border-radius: 22px;
   background: rgba(8, 18, 44, .5);
   border: 1px solid var(--line);
 }
-.sugs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.sugs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .sugs-head h3 { font-family: var(--serif); font-weight: 500; font-style: italic; font-size: 19px; color: var(--foam); }
 .sugs-head h3 small { font-family: var(--sans); font-style: normal; font-size: 12px; color: var(--dim); margin-left: 8px; }
 #suggestion-prefix-badge { font-family: var(--mono); font-size: 11px; color: var(--pyrite); }
-.sugs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sugs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .sug {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 12px;
+  padding: 4px 12px;
   border-radius: 10px;
   border-left: 2px solid var(--c, var(--lapis-soft));
   background: rgba(142, 168, 230, .05);
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 16px;
+  line-height: 1.35;
   color: var(--foam);
   min-width: 0;
 }
@@ -419,6 +418,18 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .dot.loading { background: var(--pyrite); box-shadow: 0 0 10px rgba(212, 175, 106, .6); animation: breathe 2s ease-in-out infinite; }
 @keyframes breathe { 50% { opacity: .35; } }
+
+/* ---------- common-words switch ---------- */
+.toggle { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: var(--dim); cursor: pointer; user-select: none; position: relative; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.switch { position: relative; flex: none; width: 34px; height: 20px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); transition: background .25s, border-color .25s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--mist); transition: transform .25s, background .25s; }
+.toggle input:checked + .switch { background: rgba(63, 100, 200, .4); border-color: rgba(142, 168, 230, .4); }
+.toggle input:checked + .switch::after { transform: translateX(14px); background: var(--pyrite); }
+.toggle input:checked ~ span:last-child { color: var(--foam); }
+.toggle input:focus-visible + .switch { outline: 2px solid var(--lapis-soft); outline-offset: 2px; }
+.toggle.is-disabled { opacity: .45; cursor: not-allowed; }
+
 
 /* ---------- rules ---------- */
 .modal {
@@ -486,7 +497,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.1</p>
+      <p>version 0.2</p>
     </div>
     <button id="btn-how-to-play" class="link" type="button">rules</button>
   </header>
@@ -545,8 +556,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
           <select id="ai-difficulty">
             <option value="easy">Easy, simple words</option>
             <option value="medium" selected>Medium, standard</option>
-            <option value="master">Master, long words</option>
+            <option value="master">Master, sets traps</option>
           </select>
+        </label>
+        <label class="toggle" title="Only everyday words, for you and the AI">
+          <input type="checkbox" id="strict-mode" disabled>
+          <span class="switch" aria-hidden="true"></span>
+          <span>common words only</span>
         </label>
       </section>
 
@@ -589,14 +605,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <h3>How it works</h3>
       <button id="btn-close-modal" type="button" aria-label="Close">&times;</button>
     </div>
-    <p>Each word has to begin with the letters the last word ended on. Those letters are already typed for you.</p>
+    <p>Each word has to begin with the letters the last word ended on. Those letters are already typed for you, and the word can be just those letters, like <span class="tail">me</span> after so<span class="tail">me</span>.</p>
     <ul>
       <li><span>1 letter</span><span>lio<span class="tail">n</span> &rarr; <span class="tail">n</span>ight</span></li>
       <li><span>2 letters</span><span>drag<span class="tail">on</span> &rarr; <span class="tail">on</span>line</span></li>
       <li><span>3 letters</span><span>compu<span class="tail">ter</span> &rarr; <span class="tail">ter</span>rain</span></li>
     </ul>
     <p>In escalating mode the water gets deeper as the chain grows. Past 100 words, two and three letter tails become common, and past 250 they take over.</p>
-    <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, counted up to 20 letters. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, up to &times;3. The streak resets when a match ends.</p>
+    <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
+    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
   </div>
 </div>
@@ -651,7 +668,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* ---------- game state ---------- */
 let dictionarySet = new Set();
 let dictionaryArray = [];
-let commonWordsSet = new Set();
+let commonRank = new Map();      // everyday word -> rank (0 = most common)
+let idxAll = new Map();         // prefix (1-3 letters) -> plain words, easiest first
+let idxCommon = new Map();      // same, everyday words only
+let strictSet = new Set();
+let strictAvailable = false;
+let strictMode = false;
 let usedWords = new Set();
 let currentRule = "weighted";
 let activeTailLength = 1;
@@ -686,6 +708,7 @@ const headerStreak = document.getElementById('header-streak');
 const chainLengthBadge = document.getElementById('chain-length-badge');
 const modeBtns = document.querySelectorAll('.mode-btn');
 const aiDifficultySelect = document.getElementById('ai-difficulty');
+const strictToggle = document.getElementById('strict-mode');
 const probStageLabel = document.getElementById('prob-stage-label');
 const gameOverSuggestions = document.getElementById('game-over-suggestions');
 const suggestionWordsList = document.getElementById('suggestion-words-list');
@@ -700,10 +723,43 @@ const topCommonWords = ["the","be","to","of","and","a","in","that","have","i","i
 
 function getWordComplexity(word) {
   let s = word.length * 10;
-  if (commonWordsSet.has(word)) s -= 35;
-  const rareLetters = (word.match(/[qzxj]/g) || []).length;
-  s += rareLetters * 15;
-  return Math.max(1, s);
+  const r = commonRank.get(word);
+  if (r !== undefined) s -= r < 3000 ? 50 : r < 12000 ? 35 : 20;
+  s += (word.match(/[qzxj]/g) || []).length * 15;
+  return s + (r !== undefined ? r / 1e5 : 1);
+}
+
+// score every word once, then sort (much faster than scoring inside the comparison)
+function sortByComplexity(words) {
+  return words.map(w => [w, getWordComplexity(w)]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+}
+
+// prefix (1 to 3 letters) -> words, keeping the easiest-first order
+function buildIndex(words) {
+  const m = new Map();
+  for (const w of words) {
+    for (let n = 1; n <= 3 && n <= w.length; n++) {
+      const k = w.slice(0, n);
+      let a = m.get(k);
+      if (!a) { a = []; m.set(k, a); }
+      a.push(w);
+    }
+  }
+  return m;
+}
+
+function currentIndex() { return strictMode ? idxCommon : idxAll; }
+
+function usableWords(prefix) {
+  const src = currentIndex().get(prefix);
+  return src ? src.filter(w => !usedWords.has(w)) : [];
+}
+
+function hasUsable(prefix) {
+  const src = currentIndex().get(prefix);
+  if (!src) return false;
+  for (const w of src) if (!usedWords.has(w)) return true;
+  return false;
 }
 
 const builtInFallbackWords = [
@@ -739,44 +795,74 @@ function setDictStatus(html) {
   if (dictionaryStatus) dictionaryStatus.innerHTML = html;
 }
 
-async function loadDictionary() {
-  try {
-    commonWordsSet = new Set(topCommonWords);
-    dictionaryArray = [...builtInFallbackWords];
-    dictionarySet = new Set(dictionaryArray);
-    dictionaryArray.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
+function installDictionary(everything, plainList, commonList) {
+  commonRank = new Map(commonList.map((w, i) => [w, i]));   // must come first, the sort uses it
+  dictionarySet = everything;
+  const plainSet = new Set(plainList);
+  dictionaryArray = sortByComplexity(plainList);
+  idxAll = buildIndex(dictionaryArray);
+  const commonPlain = commonList.filter(w => plainSet.has(w));
+  strictSet = new Set(commonPlain);
+  idxCommon = buildIndex(sortByComplexity(commonPlain));
+  strictAvailable = commonPlain.length > 500;
+  applyStrictAvailability();
+}
 
-    if (btnStart) btnStart.disabled = false;
-    setDictStatus('<span class="dot loading"></span>loading the full dictionary');
-
-    const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words.txt');
-    if (!response.ok) throw new Error("Network response error");
-    const text = await response.text();
-
-    // everything is accepted from you (names and places included),
-    // but the AI and the suggestions only draw from the plain lowercase words
-    const everything = new Set(builtInFallbackWords);
-    const plain = new Set(builtInFallbackWords);
-    for (const raw of text.split(/\r?\n/)) {
-      const w = raw.trim();
-      if (w.length < 2 || !/^[A-Za-z]+$/.test(w)) continue;
-      const lower = w.toLowerCase();
-      everything.add(lower);
-      if (w === lower) plain.add(lower);
-    }
-
-    dictionarySet = everything;
-    dictionaryArray = [...plain];
-    dictionaryArray.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
-
-    setDictStatus(`<span class="dot"></span>${everything.size.toLocaleString()} words ready, plus online lookup for the rest`);
-  } catch (err) {
-    console.warn("Using built-in local dictionary fallback:", err);
-    dictionaryArray = [...builtInFallbackWords];
-    dictionarySet = new Set(dictionaryArray);
-    setDictStatus(`<span class="dot"></span>${dictionaryArray.length} words ready (offline set)`);
-    if (btnStart) btnStart.disabled = false;
+function applyStrictAvailability() {
+  if (!strictToggle) return;
+  const label = strictToggle.closest('.toggle');
+  strictToggle.disabled = !strictAvailable;
+  if (label) {
+    label.classList.toggle('is-disabled', !strictAvailable);
+    label.title = strictAvailable ? 'Only everyday words, for you and the AI' : 'The everyday words list (common.txt) could not be loaded';
   }
+  if (!strictAvailable) strictMode = false;
+  strictToggle.checked = strictMode;
+}
+
+// tries each address in turn, returns the text or null
+async function fetchText(urls) {
+  for (const u of urls) {
+    try {
+      const r = await fetch(u);
+      if (r.ok) return await r.text();
+    } catch (e) { /* try the next one */ }
+  }
+  return null;
+}
+
+// words.txt and common.txt sit next to this page (GitHub Pages serves them compressed).
+// If words.txt is missing, fall back to the public list on GitHub.
+const WORDS_URLS = ['words.txt', 'https://raw.githubusercontent.com/dwyl/english-words/master/words.txt'];
+const COMMON_URLS = ['common.txt'];
+
+async function loadDictionary() {
+  installDictionary(new Set(builtInFallbackWords), [...builtInFallbackWords], []);
+  if (btnStart) btnStart.disabled = false;
+  setDictStatus('<span class="dot loading"></span>loading the full dictionary');
+
+  const [wordsText, commonText] = await Promise.all([fetchText(WORDS_URLS), fetchText(COMMON_URLS)]);
+  if (!wordsText) {
+    setDictStatus(`<span class="dot"></span>${builtInFallbackWords.length} words ready (offline set)`);
+    return;
+  }
+
+  // everything is accepted from you (names and places included),
+  // but the AI and the suggestions only draw from the plain lowercase words
+  const everything = new Set(builtInFallbackWords);
+  const plain = new Set(builtInFallbackWords);
+  for (const raw of wordsText.split(/\r?\n/)) {
+    const w = raw.trim();
+    if (w.length < 2 || !/^[A-Za-z]+$/.test(w)) continue;
+    const lower = w.toLowerCase();
+    everything.add(lower);
+    if (w === lower) plain.add(lower);
+  }
+  const common = commonText ? commonText.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : [];
+
+  installDictionary(everything, [...plain], common);
+  const note = strictAvailable ? '' : ', everyday-words mode unavailable';
+  setDictStatus(`<span class="dot"></span>${everything.size.toLocaleString()} words ready${note}, plus online lookup for the rest`);
 }
 
 /* ---------- settings ---------- */
@@ -786,11 +872,24 @@ if (aiDifficultySelect) {
   });
 }
 
+if (strictToggle) {
+  strictToggle.addEventListener('change', () => { strictMode = strictToggle.checked; });
+}
+
+let pendingRule = null;
+let pendingRuleTimer = null;
 modeBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    if (isGameActive && usedWords.size > 0) {
-      if (!confirm("Changing the rule will restart the match. Continue?")) return;
+    if (btn.dataset.rule === currentRule) return;
+    // switching mid-match restarts it, so ask with a second press (no pop-up, the timer keeps running)
+    if (isGameActive && usedWords.size > 0 && pendingRule !== btn.dataset.rule) {
+      pendingRule = btn.dataset.rule;
+      clearTimeout(pendingRuleTimer);
+      pendingRuleTimer = setTimeout(() => { pendingRule = null; }, 3000);
+      showStatus(`Press "${btn.textContent.trim()}" again to switch rules and restart the match.`, "info");
+      return;
     }
+    pendingRule = null;
     modeBtns.forEach(b => b.classList.remove('is-active'));
     btn.classList.add('is-active');
 
@@ -849,12 +948,7 @@ function calculateNextTailLength(lastWord) {
   targetLen = Math.min(targetLen, Math.max(1, lastWord.length - 1));
 
   while (targetLen > 1) {
-    const prefix = lastWord.slice(-targetLen);
-    const candidateCount = dictionaryArray.filter(w =>
-      w.startsWith(prefix) && !usedWords.has(w) && w.length > targetLen
-    ).length;
-
-    if (candidateCount > 0) break;
+    if (hasUsable(lastWord.slice(-targetLen))) break;
     targetLen--;
   }
 
@@ -863,6 +957,7 @@ function calculateNextTailLength(lastWord) {
 
 /* ---------- game flow ---------- */
 function startGame() {
+  disarmGiveUp();
   usedWords.clear();
   score = 0;
   streak = 0;
@@ -893,6 +988,7 @@ function startGame() {
 }
 
 function resetGame() {
+  disarmGiveUp();
   clearInterval(turnTimer);
   isGameActive = false;
   requiredPrefix = "";
@@ -912,21 +1008,30 @@ function resetGame() {
   updateProbabilityUI();
 }
 
+let lookupBudgetMs = 0;   // how much online-lookup time may be paused this turn
+
+function tickTimer() {
+  timeLeft--;
+  updateTimerDisplay();
+  if (timeLeft <= 0) {
+    clearInterval(turnTimer);
+    handleTimeOut();
+  }
+}
+
 function startTimer() {
   clearInterval(turnTimer);
   timeLeft = TURN_SECONDS;
+  lookupBudgetMs = 6000;
   if (timerBar) timerBar.classList.add('snap');
   updateTimerDisplay();
   if (timerBar) { void timerBar.offsetWidth; timerBar.classList.remove('snap'); }
+  turnTimer = setInterval(tickTimer, 1000);
+}
 
-  turnTimer = setInterval(() => {
-    timeLeft--;
-    updateTimerDisplay();
-    if (timeLeft <= 0) {
-      clearInterval(turnTimer);
-      handleTimeOut();
-    }
-  }, 1000);
+function resumeTimer() {
+  clearInterval(turnTimer);
+  turnTimer = setInterval(tickTimer, 1000);
 }
 
 function updateTimerDisplay() {
@@ -957,8 +1062,8 @@ if (wordForm) {
       return;
     }
 
-    if (word.length <= activeTailLength) {
-      showStatus(`The word has to be longer than ${activeTailLength} letter${activeTailLength === 1 ? '' : 's'}.`, "error");
+    if (word.length < 2) {
+      showStatus("Words need at least two letters.", "error");
       shakeInput();
       return;
     }
@@ -969,12 +1074,26 @@ if (wordForm) {
       return;
     }
 
-    if (!dictionarySet.has(word)) {
+    if (strictMode) {
+      if (!strictSet.has(word)) {
+        showStatus(`"${word.toUpperCase()}" is not an everyday word. Switch off "common words only" to play it.`, "error");
+        shakeInput();
+        return;
+      }
+    } else if (!dictionarySet.has(word)) {
       if (checkingOnline) return;
       checkingOnline = true;
-      showStatus(`Looking up "${word.toUpperCase()}" online...`, "info");
+      // the clock waits while we look the word up (up to 6 seconds per turn, so it cannot be abused)
+      const paused = lookupBudgetMs > 0;
+      if (paused) clearInterval(turnTimer);
+      const startedAt = Date.now();
+      showStatus(paused ? `Looking up "${word.toUpperCase()}" online. The clock is waiting.` : `Looking up "${word.toUpperCase()}" online...`, "info");
       const found = await existsOnline(word);
       checkingOnline = false;
+      if (paused) {
+        lookupBudgetMs -= Date.now() - startedAt;
+        if (isGameActive && isPlayerTurn && found !== true) resumeTimer();
+      }
       if (!isGameActive || !isPlayerTurn) return;
       if (found === null) {
         showStatus("Could not reach the online dictionary to check that word.", "error");
@@ -1026,33 +1145,58 @@ function playWord(word, player) {
   startTimer();
 }
 
+// chance of each tail length for the next word, so Master can aim at it
+function tailOdds() {
+  if (currentRule !== 'weighted') {
+    const n = parseInt(currentRule);
+    return { 1: n === 1 ? 1 : 0, 2: n === 2 ? 1 : 0, 3: n === 3 ? 1 : 0 };
+  }
+  const p = getProbabilities();
+  return { 1: p.p1 / 100, 2: p.p2 / 100, 3: p.p3 / 100 };
+}
+
+// Master: choose the word that leaves you the fewest words to answer with
+function pickTrapWord(list) {
+  const odds = tailOdds();
+  const src = currentIndex();
+  let best = null;
+  let bestScore = Infinity;
+  for (const w of list.slice(0, 400)) {
+    let s = 0;
+    for (let n = 1; n <= 3; n++) {
+      if (!odds[n] || w.length <= n) continue;
+      const left = src.get(w.slice(-n));
+      s += odds[n] * (left ? left.length : 0);
+    }
+    if (s < bestScore || (s === bestScore && best && w.length > best.length)) {
+      best = w;
+      bestScore = s;
+    }
+  }
+  return best || list[0];
+}
+
+function pickAiWord() {
+  const all = usableWords(requiredPrefix);
+  if (all.length === 0) return null;
+  // prefer everyday words so the AI does not play obscure junk
+  const everyday = strictMode ? all : all.filter(w => commonRank.has(w));
+  let nice = everyday.length >= 5 ? everyday : all;
+  const longer = nice.filter(w => w.length >= 3);          // skip two-letter oddities when there are choices
+  if (longer.length >= 5) nice = longer;
+  if (aiDifficulty === "easy") return nice[Math.floor(Math.random() * Math.min(nice.length, 5))];
+  if (aiDifficulty === "medium") return nice[Math.floor(Math.random() * Math.min(nice.length, 15))];
+  const solid = nice.filter(w => commonRank.get(w) < 15000);  // traps made of well known words
+  return pickTrapWord(solid.length >= 8 ? solid : nice);
+}
+
 function aiPlayTurn() {
   if (!isGameActive) return;
 
-  const candidates = dictionaryArray.filter(w =>
-    w.startsWith(requiredPrefix) &&
-    !usedWords.has(w) &&
-    w.length > activeTailLength
-  );
-
-  if (candidates.length === 0) {
+  const selectedWord = pickAiWord();
+  if (!selectedWord) {
     playerWins(`The AI could not find a word starting with "${requiredPrefix.toUpperCase()}".`);
     return;
-  }
-
-  candidates.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
-
-  let selectedWord = "";
-  if (aiDifficulty === "easy") {
-    const pool = candidates.slice(0, Math.min(candidates.length, 5));
-    selectedWord = pool[Math.floor(Math.random() * pool.length)];
-  } else if (aiDifficulty === "medium") {
-    const pool = candidates.slice(0, Math.min(candidates.length, 15));
-    selectedWord = pool[Math.floor(Math.random() * pool.length)];
-  } else {
-    const pool = candidates.slice(0, Math.min(candidates.length, 30));
-    pool.sort((a, b) => b.length - a.length);
-    selectedWord = pool[0];
   }
 
   playWord(selectedWord, "AI");
@@ -1093,12 +1237,12 @@ let best = 0;
 try { best = parseInt(localStorage.getItem('wordchain-best') || '0', 10) || 0; } catch (e) {}
 
 function streakMultiplier(n) {
-  return 1 + Math.min(n, 40) * 0.05;
+  return 1 + n * 0.05;
 }
 
 function scoreWord(word, tail, streakBefore) {
   const base = word.length * 10;
-  const extra = Math.max(0, Math.min(word.length, 20) - 5);
+  const extra = Math.max(0, word.length - 5);
   const lengthBonus = extra * extra * 10;
   const tailMult = 1 + (tail - 1) * 0.5;
   const streakMult = streakMultiplier(streakBefore);
@@ -1204,6 +1348,7 @@ function shakeInput() {
 
 /* ---------- endings ---------- */
 function gameOver(reason) {
+  disarmGiveUp();
   clearInterval(turnTimer);
   isGameActive = false;
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
@@ -1218,11 +1363,7 @@ function gameOver(reason) {
 function showGameOverSuggestions() {
   if (!gameOverSuggestions || !requiredPrefix) return;
 
-  const candidates = dictionaryArray.filter(w =>
-    w.startsWith(requiredPrefix) &&
-    !usedWords.has(w) &&
-    w.length > activeTailLength
-  );
+  const candidates = usableWords(requiredPrefix);   // already easiest first
 
   if (suggestionPrefixBadge) suggestionPrefixBadge.textContent = `${requiredPrefix.toUpperCase()} \u00b7 ${activeTailLength} letter${activeTailLength === 1 ? '' : 's'}`;
   if (suggestionWordsList) suggestionWordsList.innerHTML = '';
@@ -1230,8 +1371,6 @@ function showGameOverSuggestions() {
   if (candidates.length === 0) {
     if (suggestionWordsList) suggestionWordsList.innerHTML = '<div class="no-words">No valid words were left in the dictionary.</div>';
   } else {
-    candidates.sort((a, b) => getWordComplexity(a) - getWordComplexity(b));
-
     const total = candidates.length;
     const sampled = [];
 
@@ -1261,6 +1400,7 @@ function showGameOverSuggestions() {
 }
 
 function playerWins(reason) {
+  disarmGiveUp();
   clearInterval(turnTimer);
   isGameActive = false;
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
@@ -1272,9 +1412,23 @@ function playerWins(reason) {
 }
 
 /* ---------- buttons ---------- */
+let giveUpArmed = false;
+let giveUpTimer = null;
+function disarmGiveUp() {
+  giveUpArmed = false;
+  clearTimeout(giveUpTimer);
+  if (btnGiveUp) btnGiveUp.textContent = 'Give up';
+}
 if (btnGiveUp) {
+  // press twice: the first press asks, the second gives up. The timer keeps running the whole time.
   btnGiveUp.addEventListener('click', () => {
-    if (isGameActive && confirm("Are you sure you want to give up this match?")) {
+    if (!isGameActive) return;
+    if (!giveUpArmed) {
+      giveUpArmed = true;
+      btnGiveUp.textContent = 'Sure?';
+      giveUpTimer = setTimeout(disarmGiveUp, 3000);
+    } else {
+      disarmGiveUp();
       gameOver("You gave up.");
     }
   });
