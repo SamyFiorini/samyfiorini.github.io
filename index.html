@@ -268,6 +268,38 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btn.ghost:hover:not(:disabled) { color: var(--foam); border-color: rgba(142, 168, 230, .4); }
 .btn:disabled { opacity: .35; cursor: not-allowed; }
 
+/* ---------- guess bubbles ---------- */
+.bubbles { display: flex; justify-content: center; align-items: center; gap: 13px; margin-top: 20px; min-height: 20px; transition: opacity .5s; }
+.bubbles.idle { opacity: .4; }
+.bubbles i {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .6), rgba(142, 168, 230, .24) 38%, rgba(63, 100, 200, .18) 72%);
+  border: 1px solid rgba(160, 185, 240, .5);
+  box-shadow: 0 0 12px rgba(111, 150, 240, .28);
+  animation: bob 4.5s ease-in-out infinite;
+}
+.bubbles i:nth-child(2) { animation-delay: -.9s; }
+.bubbles i:nth-child(3) { animation-delay: -1.8s; }
+.bubbles i:nth-child(4) { animation-delay: -2.7s; }
+.bubbles i:nth-child(5) { animation-delay: -3.6s; }
+@keyframes bob { 50% { transform: translateY(-3px); } }
+.bubbles i.popping { animation: pop .5s ease-out forwards; }
+@keyframes pop {
+  0%   { transform: scale(1); opacity: 1; }
+  35%  { transform: scale(1.8); opacity: .9; border-color: rgba(212, 175, 106, .85); }
+  100% { transform: scale(2.4); opacity: 0; border-color: rgba(212, 175, 106, 0); }
+}
+.bubbles i.gone { animation: none; background: none; box-shadow: none; border: 1px dashed rgba(142, 168, 230, .25); opacity: .55; transform: scale(.55); }
+@media (min-width: 900px) and (max-height: 760px) {
+  .stage { padding: 18px 24px 16px; }
+  .prefix { font-size: 58px; }
+  .timer { margin: 16px auto 14px; }
+  .bubbles { margin-top: 14px; }
+}
+
 /* ---------- chain ---------- */
 .chain { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .chain-head {
@@ -497,7 +529,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.2</p>
+      <p>version 0.3</p>
     </div>
     <button id="btn-how-to-play" class="link" type="button">rules</button>
   </header>
@@ -519,6 +551,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         <div class="actions">
           <button id="btn-start" class="btn primary" type="button">Start</button>
           <button id="btn-give-up" class="btn ghost" type="button" disabled>Give up</button>
+        </div>
+
+        <div id="bubbles" class="bubbles idle" role="img" aria-label="5 guesses left" title="5 tries per word. Every word that is not in the dictionary pops a bubble.">
+          <i></i><i></i><i></i><i></i><i></i>
         </div>
       </section>
 
@@ -613,7 +649,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     </ul>
     <p>In escalating mode the water gets deeper as the chain grows. Past 100 words, two and three letter tails become common, and past 250 they take over.</p>
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
-    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
+    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
   </div>
 </div>
@@ -984,6 +1020,7 @@ function startGame() {
   updateTargetDisplay();
   startTimer();
   resetBreakdown();
+  resetGuesses();
   showStatus("Type any word to open the chain.", "info");
 }
 
@@ -1006,6 +1043,7 @@ function resetGame() {
   updateTimerDisplay();
   if (timerBar) { void timerBar.offsetWidth; timerBar.classList.remove('snap'); }
   updateProbabilityUI();
+  resetGuesses();
 }
 
 let lookupBudgetMs = 0;   // how much online-lookup time may be paused this turn
@@ -1076,8 +1114,7 @@ if (wordForm) {
 
     if (strictMode) {
       if (!strictSet.has(word)) {
-        showStatus(`"${word.toUpperCase()}" is not an everyday word. Switch off "common words only" to play it.`, "error");
-        shakeInput();
+        rejectGuess(`"${word.toUpperCase()}" is not an everyday word. Switch off "common words only" to play it.`);
         return;
       }
     } else if (!dictionarySet.has(word)) {
@@ -1101,8 +1138,7 @@ if (wordForm) {
         return;
       }
       if (!found) {
-        showStatus(`"${word.toUpperCase()}" is not in the dictionary.`, "error");
-        shakeInput();
+        rejectGuess(`"${word.toUpperCase()}" is not in the dictionary.`);
         return;
       }
       dictionarySet.add(word);
@@ -1204,6 +1240,7 @@ function aiPlayTurn() {
   isPlayerTurn = true;
   if (playerInput) playerInput.disabled = false;
   if (btnSubmit) btnSubmit.disabled = false;
+  resetGuesses();
   prepareInput();
   showStatus("Your turn.", "info");
 }
@@ -1263,6 +1300,45 @@ function showBreakdown(r) {
 function resetBreakdown() {
   const el = document.getElementById('score-breakdown');
   if (el) el.textContent = 'Longer words and unbroken streaks score more.';
+}
+
+/* ---------- five tries per word ---------- */
+const MAX_GUESSES = 5;
+let guessesLeft = MAX_GUESSES;
+const bubbleBox = document.getElementById('bubbles');
+
+// pop = true plays the pop animation on the bubble that was just lost
+function syncBubbles(pop) {
+  if (!bubbleBox) return;
+  bubbleBox.classList.toggle('idle', !isGameActive);
+  bubbleBox.setAttribute('aria-label', `${guessesLeft} ${guessesLeft === 1 ? 'guess' : 'guesses'} left`);
+  [...bubbleBox.children].forEach((b, i) => {
+    if (i < guessesLeft) { b.className = ''; return; }
+    if (b.classList.contains('gone') || b.classList.contains('popping')) return;
+    if (pop) {
+      b.className = 'popping';
+      setTimeout(() => { b.className = 'gone'; }, 520);
+    } else {
+      b.className = 'gone';
+    }
+  });
+}
+
+function resetGuesses() {
+  guessesLeft = MAX_GUESSES;
+  syncBubbles(false);
+}
+
+// a word that does not exist costs one bubble; the last one ends the match
+function rejectGuess(message) {
+  guessesLeft--;
+  syncBubbles(true);
+  if (guessesLeft <= 0) {
+    gameOver("You ran out of guesses.");
+    return;
+  }
+  showStatus(`${message} ${guessesLeft} ${guessesLeft === 1 ? 'guess' : 'guesses'} left.`, "error");
+  shakeInput();
 }
 
 /* ---------- the letters you already owe ---------- */
@@ -1358,6 +1434,7 @@ function gameOver(reason) {
   updateScoreboard();
   showStatus(`Game over. ${reason}`, "error");
   showGameOverSuggestions();
+  syncBubbles(false);
 }
 
 function showGameOverSuggestions() {
@@ -1409,6 +1486,7 @@ function playerWins(reason) {
   score += 500;
   updateScoreboard();
   showStatus(`You win. ${reason}`, "success");
+  syncBubbles(false);
 }
 
 /* ---------- buttons ---------- */
