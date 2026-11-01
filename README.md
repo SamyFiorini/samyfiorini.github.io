@@ -4,6 +4,7 @@ A deep ocean themed word game. Each word has to start with the letters the last 
 
 ## How it works
 
+- A random everyday word opens every match, and you answer it.
 - Each word must begin with the end of the previous word: `lio`**`n`** then **`n`**`ight`.
 - The matching letters are already typed for you. The word can be just those letters, like `me` after `so`**`me`**.
 - You have 20 seconds per turn. No word can be used twice in a match.
@@ -23,6 +24,11 @@ A deep ocean themed word game. Each word has to start with the letters the last 
 - The water gets deeper as your streak grows, down to the abyss at a streak of 250. The light fades, the background darkens and glowing specks appear. The depth shows at the top, next to the settings.
 - **Ocean sound** (off by default) is generated live in your browser with the Web Audio API, so there are no audio files. Near the surface it is bright, with soft chimes. Further down it gets darker and slower, with a deep hum and distant whale calls.
 - Open **settings** for volume, a mix of the five layers (water, harmony, chimes, deep hum, calls) and a depth preview. Turn off "follow my streak" to move the slider and see and hear any depth. Settings are saved in your browser.
+- Browsers only allow sound after a click or key press, so if sound was on last time it starts again at your first click.
+
+### Stats
+
+The **stats** panel keeps records, totals, averages, word lengths, how your matches ended, streak milestones and results per opponent. It sits next to settings and has a button to erase everything saved in the browser (records, stats and settings). It asks you to press twice.
 
 ### Opponents
 

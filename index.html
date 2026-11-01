@@ -377,7 +377,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sugs-head h3 { font-family: var(--serif); font-weight: 500; font-style: italic; font-size: 19px; color: var(--foam); }
 .sugs-head h3 small { font-family: var(--sans); font-style: normal; font-size: 12px; color: var(--dim); margin-left: 8px; }
 #suggestion-prefix-badge { font-family: var(--mono); font-size: 11px; color: var(--pyrite); }
-.sugs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sugs-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
 .sug {
   display: flex;
   align-items: center;
@@ -397,7 +397,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sug.hard { --c: var(--pyrite); }
 .sug .n, .sug .len { font-family: var(--mono); font-size: 10px; color: var(--dim); }
 .sug .n { width: 18px; }
-.sug .w { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug .w { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.25; padding: 3px 0; }
 .sug b { font-weight: 600; color: var(--pyrite); }
 .no-words { grid-column: 1 / -1; color: var(--dim); font-size: 13px; padding: 4px 2px; }
 
@@ -510,6 +510,23 @@ details.mix[open] summary::after { content: " \2212"; }
 details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
 @media (max-width: 560px) { .depth::after { content: ""; } .top-links { gap: 14px; } }
 
+/* ---------- stats ---------- */
+.sheet.wide { max-width: 560px; }
+.st-group { padding: 14px 0; border-top: 1px solid var(--line); display: grid; gap: 2px; }
+.st-group:first-of-type { border-top: 0; padding-top: 2px; }
+.st-group h4 { margin-bottom: 6px; font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
+.st-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-size: 14px; color: var(--mist); padding: 3px 0; }
+.st-row b { font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--foam); text-align: right; overflow-wrap: anywhere; }
+.st-row b small { margin-left: 8px; font-size: 11px; color: var(--dim); }
+.st-bars { display: grid; gap: 6px; }
+.st-bar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 54px; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--dim); }
+.st-bar i { --w: 0%; display: block; height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--lapis-bright) var(--w), rgba(142, 168, 230, .12) var(--w)); }
+.st-bar em { font-style: normal; text-align: right; color: var(--mist); }
+.st-erase { padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.sheet .st-erase .btn { margin-top: 0; }
+.btn.danger { color: var(--rose); border: 1px solid rgba(214, 138, 154, .35); }
+.btn.danger:hover { background: rgba(214, 138, 154, .1); }
+
 /* ---------- rules ---------- */
 .modal {
   position: fixed;
@@ -555,7 +572,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   .shell { padding: 22px 16px 16px; }
   .prefix { font-size: 54px; }
   .prefix.any { font-size: 34px; }
-  .sugs-grid { grid-template-columns: 1fr; }
+  .sugs-grid { grid-template-columns: minmax(0, 1fr); }
   .odds { flex-direction: column; align-items: flex-start; }
   .mode-btn { padding: 7px 10px; }
   .stage { padding: 26px 18px 22px; }
@@ -578,10 +595,11 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.5</p>
+      <p>version 0.6</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
+      <button id="btn-stats" class="link" type="button">stats</button>
       <button id="btn-settings" class="link" type="button">settings</button>
       <button id="btn-how-to-play" class="link" type="button">rules</button>
     </div>
@@ -705,6 +723,22 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
     <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
+  </div>
+</div>
+
+<div id="modal-stats" class="modal hidden">
+  <div class="sheet wide">
+    <div class="sheet-head">
+      <h3>Stats</h3>
+      <button id="btn-close-stats" class="x-btn" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div id="stats-body"></div>
+    <div class="st-erase">
+      <p class="hint">Everything here is saved only in this browser. Erasing removes your records, stats and settings, and cannot be undone.</p>
+      <button id="btn-erase" class="btn ghost danger" type="button">Erase all saved data</button>
+      <p id="erase-note" class="hint" role="status"></p>
+    </div>
+    <button id="btn-stats-ok" class="btn primary" type="button">Done</button>
   </div>
 </div>
 
@@ -832,6 +866,7 @@ let isPlayerTurn = true;
 let score = 0;
 let streak = 0;
 let isGameActive = false;
+let matchWords = 0;   // words the player has played this match
 let aiDifficulty = "medium";
 
 const EMPTY_HTML = '<div class="empty">The water is still. Press start when you are ready.</div>';
@@ -1102,6 +1137,19 @@ function calculateNextTailLength(lastWord) {
 }
 
 /* ---------- game flow ---------- */
+// a random everyday word opens each match, so nobody gets to choose where it starts
+const OPENER_SKIP = new Set(['abortion', 'rape', 'raped', 'suicide', 'murder', 'kill', 'killed', 'nazi', 'terror', 'terrorist', 'slave', 'slaves', 'sexual', 'incest', 'molest', 'genocide']);
+function pickOpener() {
+  const pool = [];
+  if (commonRank.size) {
+    for (const [w, rank] of commonRank) {
+      if (rank < 8000 && w.length >= 4 && w.length <= 8 && !usedWords.has(w) && !OPENER_SKIP.has(w) && hasUsable(w.slice(-1))) pool.push(w);
+    }
+  }
+  const src = pool.length ? pool : builtInFallbackWords.filter((w) => w.length >= 4);
+  return src.length ? src[Math.floor(Math.random() * src.length)] : null;
+}
+
 function startGame() {
   disarmGiveUp();
   usedWords.clear();
@@ -1111,6 +1159,8 @@ function startGame() {
   activeTailLength = 1;
   isGameActive = true;
   isPlayerTurn = true;
+  matchWords = 0;
+  Stats.startGame();
 
   updateScoreboard();
   if (chainFeed) chainFeed.innerHTML = '';
@@ -1127,11 +1177,13 @@ function startGame() {
   if (btnGiveUp) btnGiveUp.disabled = false;
 
   updateProbabilityUI();
-  updateTargetDisplay();
-  startTimer();
   resetBreakdown();
+  const opener = pickOpener();
+  if (opener) playWord(opener, "Start");
+  else { updateTargetDisplay(); startTimer(); }
   resetGuesses();
-  showStatus("Type any word to open the chain.", "info");
+  prepareInput();
+  showStatus(opener ? `The chain opens with "${opener.toUpperCase()}". Your turn.` : "Type any word to open the chain.", "info");
 }
 
 function resetGame() {
@@ -1252,6 +1304,7 @@ if (wordForm) {
         return;
       }
       dictionarySet.add(word);
+      Stats.bump('onlineWords');
     }
 
     playWord(word, "Player");
@@ -1275,6 +1328,8 @@ function playWord(word, player) {
   // score against the tail the word had to match, before the next one is chosen
   if (player === "Player") {
     const r = scoreWord(word, requiredPrefix ? requiredPrefix.length : 1, streak);
+    matchWords++;
+    Stats.word(word, r.total, requiredPrefix ? requiredPrefix.length : 1, Math.max(0, TURN_SECONDS - timeLeft));
     score += r.total;
     streak++;
     showBreakdown(r);
@@ -1467,6 +1522,7 @@ function resetGuesses() {
 
 // a word that does not exist costs one bubble; the last one ends the match
 function rejectGuess(message) {
+  Stats.bump('badGuesses');
   guessesLeft--;
   syncBubbles(true);
   if (guessesLeft <= 0) {
@@ -1510,7 +1566,7 @@ function appendChainBadge(word, player) {
   const mainPart = word.slice(0, word.length - activeTailLength);
   const tailPart = word.slice(-activeTailLength);
 
-  badge.innerHTML = `<small>${isPlayer ? 'you' : 'ai'}</small><span>${mainPart}<em>${tailPart}</em></span>`;
+  badge.innerHTML = `<small>${isPlayer ? 'you' : player === 'Start' ? 'start' : 'ai'}</small><span>${mainPart}<em>${tailPart}</em></span>`;
 
   chainFeed.appendChild(badge);
   chainFeed.scrollTop = chainFeed.scrollHeight;
@@ -1566,6 +1622,7 @@ function gameOver(reason) {
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
   if (btnSubmit) btnSubmit.disabled = true;
   if (btnGiveUp) btnGiveUp.disabled = true;
+  Stats.endGame(false, reason, streak, matchWords);
   streak = 0;
   updateScoreboard();
   showStatus(`Game over. ${reason}`, "error");
@@ -1619,6 +1676,7 @@ function playerWins(reason) {
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
   if (btnSubmit) btnSubmit.disabled = true;
   if (btnGiveUp) btnGiveUp.disabled = true;
+  Stats.endGame(true, reason, streak, matchWords);
   score += 500;
   updateScoreboard();
   showStatus(`You win. ${reason}`, "success");
@@ -1994,6 +2052,176 @@ if (setMusic) {
     document.addEventListener('pointerdown', arm); document.addEventListener('keydown', arm);
   }
   syncSettingsUI();
+}
+
+/* ---------- stats (kept in this browser) ---------- */
+const STATS_KEY = 'wordchain-stats';
+const LEN_BUCKETS = ['2-4', '5-6', '7-8', '9-10', '11+'];
+const MILESTONES = [10, 25, 50, 100, 150, 250];
+const lenBucket = (n) => (n <= 4 ? '2-4' : n <= 6 ? '5-6' : n <= 8 ? '7-8' : n <= 10 ? '9-10' : '11+');
+function freshStats() {
+  return {
+    games: 0, wins: 0, causes: { gaveUp: 0, timeout: 0, guesses: 0, aiTime: 0, aiStuck: 0 },
+    words: 0, letters: 0, totalScore: 0, playMs: 0, badGuesses: 0, onlineWords: 0,
+    longest: { word: '', len: 0 }, bestWord: { word: '', points: 0 },
+    answerSecs: 0, answers: 0, fastest: null, streakSum: 0, longestGame: 0, lastPlayed: 0,
+    tails: { 1: 0, 2: 0, 3: 0 },
+    lens: { '2-4': 0, '5-6': 0, '7-8': 0, '9-10': 0, '11+': 0 },
+    milestones: { 10: 0, 25: 0, 50: 0, 100: 0, 150: 0, 250: 0 },
+    byDiff: { easy: { games: 0, best: 0 }, medium: { games: 0, best: 0 }, master: { games: 0, best: 0 } }
+  };
+}
+const Stats = (() => {
+  const num = (v) => (typeof v === 'number' && isFinite(v) && v >= 0 ? v : 0);
+  let data = freshStats();
+  let startedAt = 0;
+  function load() {
+    data = freshStats();
+    try {
+      const raw = JSON.parse(localStorage.getItem(STATS_KEY) || 'null');
+      if (!raw || typeof raw !== 'object') return;
+      const merge = (dst, src) => {
+        if (!src || typeof src !== 'object') return;
+        Object.keys(dst).forEach((k) => {
+          if (typeof dst[k] === 'number') dst[k] = num(src[k]);
+          else if (dst[k] && typeof dst[k] === 'object' && !Array.isArray(dst[k])) merge(dst[k], src[k]);
+          else if (typeof dst[k] === 'string' && typeof src[k] === 'string') dst[k] = src[k].slice(0, 60);
+        });
+      };
+      merge(data, raw);
+      data.fastest = typeof raw.fastest === 'number' && raw.fastest >= 0 ? raw.fastest : null;
+    } catch (e) { /* defaults */ }
+  }
+  function save() { try { localStorage.setItem(STATS_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ } }
+  load();
+  return {
+    get: () => data,
+    reload: load,
+    reset() { data = freshStats(); startedAt = 0; },
+    startGame() { startedAt = Date.now(); },
+    bump(k) { data[k]++; save(); },
+    word(word, points, tail, secs) {
+      data.words++; data.letters += word.length; data.tails[tail] = (data.tails[tail] || 0) + 1;
+      data.lens[lenBucket(word.length)]++;
+      if (word.length > data.longest.len) data.longest = { word, len: word.length };
+      if (points > data.bestWord.points) data.bestWord = { word, points };
+      data.totalScore += points;
+      data.answerSecs += secs; data.answers++;
+      if (data.fastest === null || secs < data.fastest) data.fastest = secs;
+      save();
+    },
+    endGame(won, reason, finalStreak, wordsThisGame) {
+      data.games++;
+      if (won) data.wins++;
+      const c = /gave up/i.test(reason) ? 'gaveUp' : /Time ran out/i.test(reason) ? 'timeout' : /guesses/i.test(reason) ? 'guesses' : /AI ran out/i.test(reason) ? 'aiTime' : 'aiStuck';
+      data.causes[c]++;
+      if (won) data.totalScore += 500;
+      data.streakSum += finalStreak;
+      MILESTONES.forEach((m) => { if (finalStreak >= m) data.milestones[m]++; });
+      data.longestGame = Math.max(data.longestGame, wordsThisGame);
+      if (startedAt) data.playMs += Date.now() - startedAt;
+      startedAt = 0;
+      data.lastPlayed = Date.now();
+      const d = data.byDiff[aiDifficulty];
+      if (d) { d.games++; d.best = Math.max(d.best, finalStreak); }
+      save();
+    }
+  };
+})();
+
+const modalStats = document.getElementById('modal-stats');
+const statsBody = document.getElementById('stats-body');
+function fmtDuration(ms) {
+  const m = Math.round(ms / 60000);
+  if (m < 1) return ms >= 1000 ? Math.round(ms / 1000) + ' s' : '0 min';
+  return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+}
+function renderStats() {
+  if (!statsBody) return;
+  const d = Stats.get(), n = (v) => Math.round(v).toLocaleString();
+  const avg = (a, b, dig) => (b > 0 ? (a / b).toFixed(dig == null ? 1 : dig) : 'none yet');
+  const row = (k, v, sub) => `<div class="st-row"><span>${k}</span><b>${v}${sub ? `<small>${sub}</small>` : ''}</b></div>`;
+  const group = (title, rows) => `<section class="st-group"><h4>${title}</h4>${rows.join('')}</section>`;
+  const deepM = Math.round(Math.min(1, records.streak.streak / DEEPEST_STREAK) * 4000);
+  const maxLen = Math.max(1, ...LEN_BUCKETS.map((b) => d.lens[b]));
+  const bars = LEN_BUCKETS.map((b) => `<div class="st-bar"><span>${b}</span><i style="--w:${(d.lens[b] / maxLen * 100).toFixed(1)}%"></i><em>${n(d.lens[b])}</em></div>`).join('');
+  const diffName = { easy: 'Easy', medium: 'Medium', master: 'Master' };
+  statsBody.innerHTML = [
+    group('Records', [
+      row('best score', n(records.score.score), records.score.streak !== null && records.score.score ? `streak ${n(records.score.streak)}` : ''),
+      row('best streak', n(records.streak.streak), records.streak.score !== null && records.streak.streak ? `score ${n(records.streak.score)}` : ''),
+      row('deepest you have been', n(deepM) + ' m'),
+      row('highest scoring word', d.bestWord.word ? d.bestWord.word.toUpperCase() : 'none yet', d.bestWord.word ? n(d.bestWord.points) + ' points' : ''),
+      row('longest word', d.longest.word ? d.longest.word.toUpperCase() : 'none yet', d.longest.word ? d.longest.len + ' letters' : ''),
+      row('fastest answer', d.fastest === null ? 'none yet' : d.fastest + ' s'),
+      row('longest match', n(d.longestGame) + ' of your words')
+    ]),
+    group('Overall', [
+      row('matches played', n(d.games)),
+      row('matches won', n(d.wins), d.games ? Math.round(d.wins / d.games * 100) + '%' : ''),
+      row('time played', fmtDuration(d.playMs)),
+      row('words you played', n(d.words)),
+      row('letters typed', n(d.letters)),
+      row('points earned', n(d.totalScore)),
+      row('average score per match', d.games ? n(d.totalScore / d.games) : 'none yet'),
+      row('average streak', avg(d.streakSum, d.games)),
+      row('average word length', avg(d.letters, d.words), d.words ? 'letters' : ''),
+      row('average answer time', avg(d.answerSecs, d.answers), d.answers ? 'seconds' : '')
+    ]),
+    group('Word lengths', [`<div class="st-bars">${bars}</div>`]),
+    group('Matching letters', [
+      row('1 letter', n(d.tails[1])), row('2 letters', n(d.tails[2])), row('3 letters', n(d.tails[3]))
+    ]),
+    group('How matches ended', [
+      row('you gave up', n(d.causes.gaveUp)), row('your time ran out', n(d.causes.timeout)),
+      row('out of guesses', n(d.causes.guesses)), row('the AI ran out of time', n(d.causes.aiTime)),
+      row('the AI had no word', n(d.causes.aiStuck))
+    ]),
+    group('Guesses', [
+      row('words that were not in the dictionary', n(d.badGuesses)),
+      row('words found by online lookup', n(d.onlineWords))
+    ]),
+    group('Streak milestones', MILESTONES.map((m) => row('reached ' + m, n(d.milestones[m]) + (d.milestones[m] === 1 ? ' time' : ' times')))),
+    group('By opponent', ['easy', 'medium', 'master'].map((k) => row(diffName[k], n(d.byDiff[k].games) + ' matches', 'best streak ' + n(d.byDiff[k].best)))),
+    d.lastPlayed ? `<p class="hint">Last played ${new Date(d.lastPlayed).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}.</p>` : ''
+  ].join('');
+}
+function toggleStats(show) {
+  if (!modalStats) return;
+  modalStats.classList.toggle('hidden', !show);
+  if (show) { disarmErase(); renderStats(); const s = modalStats.querySelector('.sheet'); if (s) s.scrollTop = 0; }
+}
+const btnErase = document.getElementById('btn-erase');
+let eraseArmed = false, eraseTimer = null;
+function disarmErase() { eraseArmed = false; clearTimeout(eraseTimer); if (btnErase) btnErase.textContent = 'Erase all saved data'; }
+function eraseAll() {
+  ['wordchain-records', 'wordchain-best', STATS_KEY, SETTINGS_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
+  records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
+  Stats.reset();
+  Ocean.stop();
+  settings = loadSettings();
+  syncSettingsUI();
+  updateScoreboard();
+  renderStats();
+}
+if (modalStats) {
+  document.getElementById('btn-stats').addEventListener('click', () => toggleStats(true));
+  document.getElementById('btn-close-stats').addEventListener('click', () => toggleStats(false));
+  document.getElementById('btn-stats-ok').addEventListener('click', () => toggleStats(false));
+  modalStats.addEventListener('click', (e) => { if (e.target === modalStats) toggleStats(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleStats(false); });
+  btnErase.addEventListener('click', () => {
+    if (!eraseArmed) {
+      eraseArmed = true;
+      btnErase.textContent = 'Press again to erase everything';
+      eraseTimer = setTimeout(disarmErase, 4000);
+    } else {
+      disarmErase();
+      eraseAll();
+      const note = document.getElementById('erase-note');
+      if (note) note.textContent = 'All saved data was erased.';
+    }
+  });
 }
 
 /* ---------- go ---------- */
