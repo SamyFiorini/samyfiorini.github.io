@@ -18,6 +18,12 @@ A deep ocean themed word game. Each word has to start with the letters the last 
 - Each word in a row adds 0.05 to a streak multiplier, with no upper limit.
 - Your best score and best streak are saved in your browser. Each one shows the other number from the same match, since the longest streak is not always the highest score.
 
+### Depth and sound
+
+- The water gets deeper as your streak grows, down to the abyss at a streak of 250. The light fades, the background darkens and glowing specks appear. The depth shows at the top, next to the settings.
+- **Ocean sound** (off by default) is generated live in your browser with the Web Audio API, so there are no audio files. Near the surface it is bright, with soft chimes. Further down it gets darker and slower, with a deep hum and distant whale calls.
+- Open **settings** for volume, a mix of the five layers (water, harmony, chimes, deep hum, calls) and a depth preview. Turn off "follow my streak" to move the slider and see and hear any depth. Settings are saved in your browser.
+
 ### Opponents
 
 - **Easy** and **Medium** play everyday words.

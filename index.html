@@ -464,6 +464,52 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .toggle.is-disabled { opacity: .45; cursor: not-allowed; }
 
 
+/* ---------- depth layers ---------- */
+.sea { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 5s ease; }
+.sea-mid {
+  background:
+    radial-gradient(90% 55% at 50% 105%, rgba(24, 96, 116, .20), transparent 70%),
+    linear-gradient(180deg, #0a1a3a 0%, #071330 42%, #040b1d 100%);
+}
+.sea-deep {
+  background:
+    radial-gradient(70% 45% at 50% 108%, rgba(52, 36, 110, .34), transparent 70%),
+    radial-gradient(45% 35% at 18% 92%, rgba(24, 110, 104, .12), transparent 70%),
+    linear-gradient(180deg, #040a18 0%, #02060f 55%, #010308 100%);
+}
+.light { transition: opacity 5s ease; }
+
+.top-links { display: flex; align-items: baseline; gap: 20px; }
+.depth { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--dim); cursor: default; }
+.depth::after { content: " \00b7  " attr(data-zone); }
+
+/* ---------- settings menu ---------- */
+.x-btn { color: var(--dim); font-size: 22px; line-height: 1; padding: 2px 6px; transition: color .25s; }
+.x-btn:hover { color: var(--foam); }
+.set-group { padding: 16px 0; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.set-group:first-of-type { border-top: 0; padding-top: 4px; }
+.set-group h4 { font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
+.sheet .hint { font-size: 12.5px; line-height: 1.5; color: var(--dim); }
+.sheet .hint + .hint { margin-top: 0; }
+.toggle.big { font-size: 15px; color: var(--foam); }
+.slider { display: grid; grid-template-columns: 74px minmax(0, 1fr) 30px; align-items: center; gap: 12px; font-size: 13px; color: var(--mist); }
+.slider output { font-family: var(--mono); font-size: 11.5px; text-align: right; color: var(--dim); }
+.slider input[type=range], .slider input[type=range]::-webkit-slider-runnable-track { -webkit-appearance: none; appearance: none; }
+.slider input[type=range] { --p: 50%; width: 100%; height: 22px; background: transparent; cursor: pointer; }
+.slider input[type=range]:disabled { cursor: default; opacity: .6; }
+.slider input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--lapis-bright) var(--p), rgba(142, 168, 230, .16) var(--p)); }
+.slider input[type=range]::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(142, 168, 230, .16); }
+.slider input[type=range]::-moz-range-progress { height: 4px; border-radius: 4px; background: var(--lapis-bright); }
+.slider input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: var(--pyrite); border: 0; box-shadow: 0 0 10px rgba(212, 175, 106, .4); }
+.slider input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--pyrite); border: 0; }
+.slider input[type=range]:focus-visible { outline: 2px solid var(--lapis-soft); outline-offset: 3px; border-radius: 4px; }
+details.mix summary { cursor: pointer; font-size: 13px; color: var(--lapis-soft); list-style: none; width: fit-content; }
+details.mix summary::-webkit-details-marker { display: none; }
+details.mix summary::after { content: " +"; }
+details.mix[open] summary::after { content: " \2212"; }
+details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
+@media (max-width: 560px) { .depth::after { content: ""; } .top-links { gap: 14px; } }
+
 /* ---------- rules ---------- */
 .modal {
   position: fixed;
@@ -522,6 +568,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 </head>
 <body>
 
+<div id="sea-mid" class="sea sea-mid" aria-hidden="true"></div>
+<div id="sea-deep" class="sea sea-deep" aria-hidden="true"></div>
 <div class="light" aria-hidden="true"></div>
 <canvas id="particles" aria-hidden="true"></canvas>
 
@@ -530,9 +578,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.4</p>
+      <p>version 0.5</p>
     </div>
-    <button id="btn-how-to-play" class="link" type="button">rules</button>
+    <div class="top-links">
+      <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
+      <button id="btn-settings" class="link" type="button">settings</button>
+      <button id="btn-how-to-play" class="link" type="button">rules</button>
+    </div>
   </header>
 
   <div class="cols">
@@ -649,21 +701,67 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <li><span>2 letters</span><span>drag<span class="tail">on</span> &rarr; <span class="tail">on</span>line</span></li>
       <li><span>3 letters</span><span>compu<span class="tail">ter</span> &rarr; <span class="tail">ter</span>rain</span></li>
     </ul>
-    <p>In escalating mode the water gets deeper as your streak grows. Past a streak of 50, two and three letter tails become common, and past 150 they take over.</p>
+    <p>The water gets deeper as your streak grows, down to the abyss at a streak of 250, and the sound follows it. In escalating mode, past a streak of 50, two and three letter tails become common, and past 150 they take over.</p>
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
     <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
   </div>
 </div>
 
+<div id="modal-settings" class="modal hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>Settings</h3>
+      <button id="btn-close-settings" class="x-btn" type="button" aria-label="Close">&times;</button>
+    </div>
+
+    <section class="set-group">
+      <h4>Sound</h4>
+      <label class="toggle big">
+        <input type="checkbox" id="set-music">
+        <span class="switch" aria-hidden="true"></span>
+        <span>ocean sound</span>
+      </label>
+      <p class="hint">Made live in your browser, so there is nothing to download. It fades in quietly and changes as you go deeper: the surface is bright with soft chimes, the deep is dark, slow and almost empty.</p>
+      <p id="sound-note" class="hint" role="status"></p>
+      <div class="slider"><label for="set-volume">volume</label><input type="range" id="set-volume" min="0" max="100"><output id="out-volume"></output></div>
+      <details class="mix">
+        <summary>mix the layers</summary>
+        <div class="mix-body">
+          <div class="slider"><label for="set-water">water</label><input type="range" id="set-water" min="0" max="100"><output id="out-water"></output></div>
+          <div class="slider"><label for="set-pads">harmony</label><input type="range" id="set-pads" min="0" max="100"><output id="out-pads"></output></div>
+          <div class="slider"><label for="set-chimes">chimes</label><input type="range" id="set-chimes" min="0" max="100"><output id="out-chimes"></output></div>
+          <div class="slider"><label for="set-drone">deep hum</label><input type="range" id="set-drone" min="0" max="100"><output id="out-drone"></output></div>
+          <div class="slider"><label for="set-calls">calls</label><input type="range" id="set-calls" min="0" max="100"><output id="out-calls"></output></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="set-group">
+      <h4>Depth</h4>
+      <label class="toggle big">
+        <input type="checkbox" id="set-follow">
+        <span class="switch" aria-hidden="true"></span>
+        <span>follow my streak</span>
+      </label>
+      <p class="hint">Turn this off to explore any depth, from the surface at 0 to the abyss at 250, and hear and see what is waiting down there.</p>
+      <div class="slider"><label for="set-preview">streak</label><input type="range" id="set-preview" min="0" max="250"><output id="out-preview"></output></div>
+    </section>
+
+    <p class="hint">More settings will appear here.</p>
+    <button id="btn-settings-ok" class="btn primary" type="button">Done</button>
+  </div>
+</div>
+
 <script>
+let visualDepth = 0;
 /* ---------- drifting specks (marine snow, with the odd fleck of gold) ---------- */
 (function () {
   const c = document.getElementById('particles');
   if (!c) return;
   const ctx = c.getContext('2d');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let w = 0, h = 0, specks = [];
+  let w = 0, h = 0, specks = [], shown = 0;
 
   function make(anywhere) {
     return {
@@ -673,7 +771,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       v: Math.random() * 0.12 + 0.03,
       d: Math.random() * Math.PI * 2,
       a: Math.random() * 0.35 + 0.08,
-      gold: Math.random() < 0.07
+      gold: Math.random() < 0.07,
+      glow: Math.random() < 0.1,
+      gr: Math.random() * 4 + 2.5
     };
   }
   function resize() {
@@ -687,10 +787,19 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   }
   function frame(t) {
     ctx.clearRect(0, 0, w, h);
+    shown += (visualDepth - shown) * 0.01;
+    const glowK = Math.min(1, Math.max(0, (shown - 0.4) / 0.4));
     for (const s of specks) {
-      s.y -= s.v;
+      s.y -= s.v * (1 - 0.45 * shown);
       s.x += Math.sin(t / 4000 + s.d) * 0.12;
       if (s.y < -10) Object.assign(s, make(false));
+      if (s.glow && glowK > 0.02) {
+        const a = glowK * 0.4 * (0.55 + 0.45 * Math.sin(t / 1100 + s.d * 3));
+        const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.gr * 3);
+        g.addColorStop(0, `rgba(127,214,194,${a})`); g.addColorStop(1, 'rgba(127,214,194,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.gr * 3, 0, Math.PI * 2); ctx.fill();
+        continue;
+      }
       ctx.beginPath();
       ctx.fillStyle = s.gold ? `rgba(212,175,106,${s.a + 0.1})` : `rgba(190,210,255,${s.a})`;
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
@@ -1431,6 +1540,7 @@ function updateScoreboard() {
   set('best-score-sub', records.score.score > 0 && records.score.streak !== null ? `streak ${records.score.streak.toLocaleString()}` : '');
   set('header-best-streak', records.streak.streak.toLocaleString());
   set('best-streak-sub', records.streak.streak > 0 && records.streak.score !== null ? `score ${records.streak.score.toLocaleString()}` : '');
+  updateDepth();
 }
 
 function showStatus(text, type) {
@@ -1549,6 +1659,342 @@ if (modalInstructions) {
   modalInstructions.addEventListener('click', (e) => { if (e.target === modalInstructions) toggleModal(false); });
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleModal(false); });
+
+/* ---------- ocean sound: generated live in the browser, nothing to download ---------- */
+function smoothstep(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+const midiHz = (n) => 440 * Math.pow(2, (n - 69) / 12);
+const OCEAN_LAYERS = ['water', 'pads', 'chimes', 'drone', 'calls'];
+// pad chords (MIDI notes, four voices): sunlit = bright and open, twilight = softer and minor, deep = low stacked fifths
+const OCEAN_CHORDS = [
+  [[50, 57, 61, 66], [47, 54, 57, 62], [43, 50, 59, 66], [45, 52, 59, 64]],
+  [[38, 45, 53, 60], [46, 53, 57, 62], [43, 50, 58, 65], [45, 50, 57, 64]],
+  [[38, 45, 50, 57], [36, 43, 50, 55], [34, 41, 48, 53], [38, 45, 52, 59]]
+];
+
+function createOcean(ctx, dest, seed) {
+  let s = (seed == null ? Math.floor(Math.random() * 4294967296) : seed) >>> 0;
+  const rnd = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const now = () => ctx.currentTime;
+  const ramp = (param, v, tc) => { if (tc > 0) param.setTargetAtTime(v, now(), tc); else param.setValueAtTime(v, now()); };
+  let depth = 0;
+  const starters = [];
+  const osc = (type, freq) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; starters.push(o); return o; };
+  const gain = (v) => { const g = ctx.createGain(); g.gain.value = v; return g; };
+  const filt = (type, f, q) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q == null ? 0.7 : q; return b; };
+
+  /* output: layers -> bus -> tone -> compressor -> master -> speakers */
+  const master = gain(0);
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -20; comp.knee.value = 24; comp.ratio.value = 3; comp.attack.value = 0.08; comp.release.value = 0.5;
+  const tone = filt('lowpass', 7000, 0.3);
+  const bus = gain(1);
+  bus.connect(tone); tone.connect(comp); comp.connect(master); master.connect(dest);
+
+  /* a soft, dark reverb made from decaying noise */
+  const secs = 4.5, len = Math.floor(ctx.sampleRate * secs);
+  const imp = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = imp.getChannelData(c); let last = 0;
+    for (let i = 0; i < len; i++) { last = last * 0.62 + (rnd() * 2 - 1) * 0.38; d[i] = last * Math.pow(1 - i / len, 3.2); }
+  }
+  const verb = ctx.createConvolver(); verb.buffer = imp;
+  const verbIn = gain(1), verbOut = gain(0.8);
+  verbIn.connect(verb); verb.connect(verbOut); verbOut.connect(bus);
+
+  /* each layer has its own level, plus how much of it goes into the reverb */
+  const layer = {};
+  const send = { water: 0.08, pads: 0.5, chimes: 0.7, drone: 0.1, calls: 0.9 };
+  OCEAN_LAYERS.forEach((n) => { const g = gain(1); g.connect(bus); const sg = gain(send[n]); g.connect(sg); sg.connect(verbIn); layer[n] = g; });
+
+  /* water: a slow dark wash plus a little surface shimmer that fades with depth */
+  function brownNoise(sec) {
+    const sr = ctx.sampleRate, N = Math.floor(sr * sec), F = Math.floor(sr * 0.25);
+    const gen = new Float32Array(N + F); let last = 0;
+    for (let i = 0; i < N + F; i++) { last = (last + 0.02 * (rnd() * 2 - 1)) / 1.02; gen[i] = last * 3.5; }
+    const buf = ctx.createBuffer(1, N, sr), d = buf.getChannelData(0);
+    for (let i = 0; i < N; i++) d[i] = i < F ? gen[i] * (i / F) + gen[N + i] * (1 - i / F) : gen[i];
+    return buf;
+  }
+  function whiteNoise(sec) {
+    const sr = ctx.sampleRate, N = Math.floor(sr * sec), buf = ctx.createBuffer(1, N, sr), d = buf.getChannelData(0);
+    for (let i = 0; i < N; i++) d[i] = rnd() * 2 - 1;
+    return buf;
+  }
+  const wash = ctx.createBufferSource(); wash.buffer = brownNoise(8); wash.loop = true; starters.push(wash);
+  const washHP = filt('highpass', 150, 0.5), washLP = filt('lowpass', 1500, 0.5), washDyn = gain(0.2);
+  wash.connect(washHP); washHP.connect(washLP); washLP.connect(washDyn); washDyn.connect(layer.water);
+  const swell = osc('sine', 0.09), swellAmt = gain(0.2); swell.connect(swellAmt); swellAmt.connect(washDyn.gain);
+  const drift = osc('sine', 0.05), driftAmt = gain(350); drift.connect(driftAmt); driftAmt.connect(washLP.frequency);
+  const fizz = ctx.createBufferSource(); fizz.buffer = whiteNoise(3); fizz.loop = true; starters.push(fizz);
+  const fizzBP = filt('bandpass', 3200, 0.8), fizzDyn = gain(0.012);
+  fizz.connect(fizzBP); fizzBP.connect(fizzDyn); fizzDyn.connect(layer.water);
+  const fizzLfo = osc('sine', 0.13), fizzAmt = gain(0.008); fizzLfo.connect(fizzAmt); fizzAmt.connect(fizzDyn.gain);
+
+  /* pads: four slow voices that glide from chord to chord */
+  const padLP = filt('lowpass', 2600, 0.4), padDyn = gain(1);
+  padLP.connect(padDyn); padDyn.connect(layer.pads);
+  const voices = [];
+  for (let i = 0; i < 4; i++) {
+    const a = osc('triangle', 220), b = osc('sine', 220);
+    a.detune.value = -5 + i * 3; b.detune.value = 5 - i * 2;
+    const vg = gain(0.06), ga = gain(0.7), gb = gain(0.9);
+    a.connect(ga); b.connect(gb); ga.connect(vg); gb.connect(vg); vg.connect(padLP);
+    const breath = osc('sine', 0.03 + i * 0.012), breathAmt = gain(0.028); breath.connect(breathAmt); breathAmt.connect(vg.gain);
+    voices.push({ a, b });
+  }
+  let chordIdx = 0, firstChord = true;
+  function changeChord(t) {
+    const z = depth < 0.28 ? 0 : depth < 0.62 ? 1 : 2, prog = OCEAN_CHORDS[z], chord = prog[chordIdx++ % prog.length];
+    voices.forEach((v, i) => {
+      const f = midiHz(chord[i]);
+      if (firstChord) { v.a.frequency.setValueAtTime(f, t); v.b.frequency.setValueAtTime(f, t); }
+      else { v.a.frequency.setTargetAtTime(f, t, 2.2); v.b.frequency.setTargetAtTime(f, t, 2.2); }
+    });
+    firstChord = false;
+  }
+
+  /* chimes: a few soft glassy notes near the surface that thin out and disappear */
+  function playChime(t) {
+    if (rnd() > 1 - smoothstep(0.25, 0.7, depth)) return;
+    const scale = depth < 0.3 ? [74, 76, 78, 81, 83, 86] : [62, 67, 69, 74];
+    const f = midiHz(scale[Math.floor(rnd() * scale.length)]);
+    const g = gain(0.0001), pan = ctx.createStereoPanner();
+    pan.pan.value = rnd() * 1.2 - 0.6;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.07 * (0.6 + rnd() * 0.4), t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
+    [[1, 1], [2, 0.2], [3.01, 0.06]].forEach(([r, amt]) => {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f * r;
+      const pg = gain(amt); o.connect(pg); pg.connect(g); o.start(t); o.stop(t + 3.8);
+    });
+    g.connect(pan); pan.connect(layer.chimes);
+  }
+
+  /* drone: a very low hum that only appears further down */
+  const droneLP = filt('lowpass', 240, 0.5), droneDyn = gain(0);
+  const dr1 = osc('sine', 36.71), dr2 = osc('triangle', 73.42), dr3 = osc('sine', 55);
+  dr3.detune.value = 3;
+  const g1 = gain(0.9), g2 = gain(0.35), g3 = gain(0.3);
+  dr1.connect(g1); dr2.connect(g2); dr3.connect(g3); g1.connect(droneLP); g2.connect(droneLP); g3.connect(droneLP);
+  droneLP.connect(droneDyn); droneDyn.connect(layer.drone);
+  const trem = osc('sine', 0.06), tremAmt = gain(0.05); trem.connect(tremAmt); tremAmt.connect(droneDyn.gain);
+
+  /* calls: far-off, whale-like swells that only start past the twilight */
+  function playCall(t) {
+    if (rnd() > smoothstep(0.4, 0.75, depth)) return;
+    const f0 = 140 + rnd() * 70, dur = 4.5 + rnd() * 3;
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f0 * 1.6, t + dur * 0.35);
+    o.frequency.exponentialRampToValueAtTime(f0 * 0.8, t + dur);
+    const o2 = ctx.createOscillator(); o2.type = 'sine';
+    o2.frequency.setValueAtTime(f0 * 2, t);
+    o2.frequency.exponentialRampToValueAtTime(f0 * 3.2, t + dur * 0.35);
+    o2.frequency.exponentialRampToValueAtTime(f0 * 1.6, t + dur);
+    const vib = ctx.createOscillator(); vib.frequency.value = 5.2;
+    const vibAmt = gain(3); vib.connect(vibAmt); vibAmt.connect(o.frequency);
+    const og2 = gain(0.22); o2.connect(og2);
+    const g = gain(0.0001), lp = filt('lowpass', 900, 0.4), pan = ctx.createStereoPanner();
+    pan.pan.value = rnd() * 1.6 - 0.8;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.07, t + 1.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 2.2);
+    o.connect(g); og2.connect(g); g.connect(lp); lp.connect(pan); pan.connect(layer.calls);
+    [o, o2, vib].forEach((n) => { n.start(t); n.stop(t + dur + 2.4); });
+  }
+
+  /* scheduler: queues events a few seconds ahead of the clock */
+  let nextChord = 0, nextChime = 0, nextCall = 0;
+  function schedule(until) {
+    while (nextChord < until) { changeChord(Math.max(nextChord, now())); nextChord += 16 + rnd() * 7; }
+    while (nextChime < until) { playChime(nextChime); nextChime += (2.4 + rnd() * 3.6) * (1 + depth * 1.5); }
+    while (nextCall < until) { playCall(nextCall); nextCall += 18 + rnd() * 20; }
+  }
+
+  return {
+    begin() {
+      const t = now(); nextChord = t; nextChime = t + 2; nextCall = t + 9 + rnd() * 9;
+      starters.forEach((n) => n.start(t));
+    },
+    schedule,
+    setMaster(v, tc) { ramp(master.gain, v, tc); },
+    setLevel(name, v, tc) { if (layer[name]) ramp(layer[name].gain, v, tc); },
+    setDepth(d, tc) {
+      depth = Math.min(1, Math.max(0, d));
+      const k = depth, wb = 1500 * Math.pow(380 / 1500, k), wg = 0.2 - 0.06 * k, fz = 0.012 * (1 - smoothstep(0, 0.45, k)), dg = 0.1 * smoothstep(0.15, 0.85, k);
+      ramp(tone.frequency, 7000 * Math.pow(1100 / 7000, k), tc);
+      ramp(washLP.frequency, wb, tc); ramp(driftAmt.gain, wb * 0.23, tc);
+      ramp(washDyn.gain, wg, tc); ramp(swellAmt.gain, wg * 0.4, tc);
+      ramp(fizzDyn.gain, fz, tc); ramp(fizzAmt.gain, fz * 0.4, tc);
+      ramp(padLP.frequency, 2600 * Math.pow(520 / 2600, k), tc);
+      ramp(padDyn.gain, 1 - 0.3 * k, tc);
+      ramp(droneDyn.gain, dg, tc); ramp(tremAmt.gain, dg * 0.25, tc);
+    }
+  };
+}
+
+/* ---------- settings (kept in this browser) ---------- */
+const SETTINGS_KEY = 'wordchain-settings';
+const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80 }, follow: true, preview: 0 };
+const clampNum = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
+function loadSettings() {
+  const s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  try {
+    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+    if (raw && typeof raw === 'object') {
+      if (typeof raw.music === 'boolean') s.music = raw.music;
+      if (typeof raw.follow === 'boolean') s.follow = raw.follow;
+      s.volume = clampNum(raw.volume, 0, 100, s.volume);
+      s.preview = clampNum(raw.preview, 0, 250, s.preview);
+      OCEAN_LAYERS.forEach((n) => { s.layers[n] = clampNum(raw.layers && raw.layers[n], 0, 100, s.layers[n]); });
+    }
+  } catch (e) { /* storage unavailable: defaults */ }
+  return s;
+}
+let settings = loadSettings();
+function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ } }
+
+/* ---------- depth: the streak decides how deep the water is (deepest at 250) ---------- */
+const DEEPEST_STREAK = 250;
+const ZONES = [[0.2, 'sunlit'], [0.5, 'twilight'], [0.85, 'midnight'], [1.01, 'abyss']];
+const seaMid = document.getElementById('sea-mid');
+const seaDeep = document.getElementById('sea-deep');
+const lightEl = document.querySelector('.light');
+const depthReadout = document.getElementById('depth-readout');
+function currentDepth() {
+  const s = settings.follow ? streak : settings.preview;
+  return Math.min(1, Math.max(0, s / DEEPEST_STREAK));
+}
+function updateDepth() {
+  const d = currentDepth();
+  visualDepth = d;
+  if (seaMid) seaMid.style.opacity = smoothstep(0.05, 0.5, d).toFixed(3);
+  if (seaDeep) seaDeep.style.opacity = smoothstep(0.4, 0.95, d).toFixed(3);
+  if (lightEl) lightEl.style.opacity = (1 - 0.95 * smoothstep(0.02, 0.55, d)).toFixed(3);
+  if (depthReadout) {
+    const zone = ZONES.find((z) => d < z[0])[1];
+    depthReadout.textContent = Math.round(d * 4000).toLocaleString() + ' m';
+    depthReadout.dataset.zone = zone;
+    depthReadout.title = 'You are in the ' + zone + ' zone. Depth follows your streak.';
+  }
+  Ocean.setDepth(d);
+  syncDepthUI();
+}
+
+/* ---------- sound controller ---------- */
+const Ocean = (() => {
+  let ctx = null, eng = null, timer = null, playing = false, want = false;
+  const volGain = (v) => Math.pow(v / 100, 1.6);
+  const lvlGain = (v) => Math.pow(v / 80, 2);
+  function applyLevels(tc) { OCEAN_LAYERS.forEach((n) => eng.setLevel(n, lvlGain(settings.layers[n]), tc)); }
+  async function start() {
+    want = true;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    try {
+      if (!ctx) {
+        ctx = new AC();
+        eng = createOcean(ctx, ctx.destination);
+        applyLevels(0); eng.setDepth(currentDepth(), 0); eng.begin();
+      }
+      await ctx.resume();
+    } catch (e) { want = false; return false; }
+    if (!want) return false;
+    eng.setMaster(volGain(settings.volume), 1.0);
+    eng.schedule(ctx.currentTime + 4);
+    if (!timer) timer = setInterval(() => { if (playing) eng.schedule(ctx.currentTime + 4); }, 700);
+    playing = true;
+    return true;
+  }
+  function stop() {
+    want = false;
+    if (!eng || !playing) return;
+    playing = false;
+    eng.setMaster(0, 0.25);
+    setTimeout(() => { if (!want && ctx && ctx.state === 'running') ctx.suspend(); }, 1600);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx || !playing) return;
+    if (document.hidden) ctx.suspend(); else ctx.resume();
+  });
+  return {
+    start, stop,
+    isOn: () => playing,
+    setDepth(d) { if (eng) eng.setDepth(d, 1.5); },
+    setVolume() { if (eng && playing) eng.setMaster(volGain(settings.volume), 0.15); },
+    setLayer(n) { if (eng) eng.setLevel(n, lvlGain(settings.layers[n]), 0.15); }
+  };
+})();
+
+/* ---------- settings menu ---------- */
+const modalSettings = document.getElementById('modal-settings');
+const setMusic = document.getElementById('set-music');
+const setVolume = document.getElementById('set-volume');
+const setFollow = document.getElementById('set-follow');
+const setPreview = document.getElementById('set-preview');
+const soundNote = document.getElementById('sound-note');
+function paintRange(r) {
+  const out = document.getElementById('out-' + r.id.replace('set-', ''));
+  r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%');
+  if (out) out.textContent = r.value;
+}
+function syncDepthUI() {
+  if (!setPreview) return;
+  setPreview.disabled = settings.follow;
+  setPreview.value = settings.follow ? Math.min(DEEPEST_STREAK, streak) : settings.preview;
+  paintRange(setPreview);
+}
+function syncSettingsUI() {
+  if (!setMusic) return;
+  setMusic.checked = settings.music;
+  setVolume.value = settings.volume; paintRange(setVolume);
+  OCEAN_LAYERS.forEach((n) => { const r = document.getElementById('set-' + n); r.value = settings.layers[n]; paintRange(r); });
+  setFollow.checked = settings.follow;
+  syncDepthUI();
+}
+function toggleSettings(show) {
+  if (!modalSettings) return;
+  modalSettings.classList.toggle('hidden', !show);
+  if (show) syncSettingsUI();
+}
+if (setMusic) {
+  setMusic.addEventListener('change', async () => {
+    settings.music = setMusic.checked; saveSettings();
+    if (soundNote) soundNote.textContent = '';
+    if (settings.music) {
+      const ok = await Ocean.start();
+      if (!ok) {
+        settings.music = false; setMusic.checked = false; saveSettings();
+        if (soundNote) soundNote.textContent = 'Sound could not start in this browser.';
+      }
+    } else Ocean.stop();
+  });
+  setVolume.addEventListener('input', () => { settings.volume = +setVolume.value; paintRange(setVolume); saveSettings(); Ocean.setVolume(); });
+  OCEAN_LAYERS.forEach((n) => {
+    const r = document.getElementById('set-' + n);
+    r.addEventListener('input', () => { settings.layers[n] = +r.value; paintRange(r); saveSettings(); Ocean.setLayer(n); });
+  });
+  setFollow.addEventListener('change', () => {
+    settings.follow = setFollow.checked;
+    if (!settings.follow) settings.preview = Math.min(DEEPEST_STREAK, streak);
+    saveSettings(); updateDepth();
+  });
+  setPreview.addEventListener('input', () => { settings.preview = +setPreview.value; saveSettings(); updateDepth(); });
+  document.getElementById('btn-settings').addEventListener('click', () => toggleSettings(true));
+  document.getElementById('btn-close-settings').addEventListener('click', () => toggleSettings(false));
+  document.getElementById('btn-settings-ok').addEventListener('click', () => toggleSettings(false));
+  modalSettings.addEventListener('click', (e) => { if (e.target === modalSettings) toggleSettings(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleSettings(false); });
+  // browsers only allow sound after a click or key press, so a saved "on" starts at the first one
+  if (settings.music) {
+    const arm = () => {
+      document.removeEventListener('pointerdown', arm); document.removeEventListener('keydown', arm);
+      if (settings.music) Ocean.start();
+    };
+    document.addEventListener('pointerdown', arm); document.addEventListener('keydown', arm);
+  }
+  syncSettingsUI();
+}
 
 /* ---------- go ---------- */
 updateScoreboard();
