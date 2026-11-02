@@ -512,19 +512,31 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
 @media (max-width: 560px) { .depth::after { content: ""; } .top-links { gap: 14px; } }
 
 /* ---------- stats ---------- */
-.sheet.wide { max-width: 560px; }
-.st-group { padding: 14px 0; border-top: 1px solid var(--line); display: grid; gap: 2px; }
-.st-group:first-of-type { border-top: 0; padding-top: 2px; }
+.sheet.wide { max-width: 1020px; padding: 24px 30px 22px; }
+.sheet.wide .sheet-head { margin-bottom: 8px; }
+#stats-body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 40px; align-items: start; }
+.st-col { display: grid; gap: 0; min-width: 0; }
+.st-group { display: grid; gap: 1px; padding: 0 0 14px; }
+.st-miles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; }
+.st-miles div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 3px 10px; border-radius: 8px; background: rgba(142, 168, 230, .06); font-size: 12px; color: var(--dim); }
+.st-miles b { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--foam); }
+.st-foot { display: flex; align-items: center; gap: 14px; margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--line); }
+.st-foot .hint { flex: 1; }
+.sheet .st-foot .btn { width: auto; margin: 0; padding-left: 22px; padding-right: 22px; white-space: nowrap; }
+.st-foot #erase-note { flex: none; }
+.sheet { scrollbar-width: thin; scrollbar-color: rgba(142, 168, 230, .25) transparent; }
+.sheet::-webkit-scrollbar { width: 8px; }
+.sheet::-webkit-scrollbar-thumb { background: rgba(142, 168, 230, .22); border-radius: 8px; }
+@media (max-width: 900px) { #stats-body { grid-template-columns: repeat(2, minmax(0, 1fr)); } .st-foot { flex-wrap: wrap; } }
+@media (max-width: 560px) { #stats-body { grid-template-columns: minmax(0, 1fr); } }
 .st-group h4 { margin-bottom: 6px; font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
-.st-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-size: 14px; color: var(--mist); padding: 3px 0; }
+.st-row { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; font-size: 13.5px; color: var(--mist); padding: 1px 0; }
 .st-row b { font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--foam); text-align: right; overflow-wrap: anywhere; }
 .st-row b small { margin-left: 8px; font-size: 11px; color: var(--dim); }
-.st-bars { display: grid; gap: 6px; }
+.st-bars { display: grid; gap: 4px; }
 .st-bar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 54px; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--dim); }
 .st-bar i { --w: 0%; display: block; height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--lapis-bright) var(--w), rgba(142, 168, 230, .12) var(--w)); }
 .st-bar em { font-style: normal; text-align: right; color: var(--mist); }
-.st-erase { padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
-.sheet .st-erase .btn { margin-top: 0; }
 .btn.danger { color: var(--rose); border: 1px solid rgba(214, 138, 154, .35); }
 .btn.danger:hover { background: rgba(214, 138, 154, .1); }
 
@@ -596,7 +608,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.6</p>
+      <p>version 0.7</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -734,12 +746,11 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
       <button id="btn-close-stats" class="x-btn" type="button" aria-label="Close">&times;</button>
     </div>
     <div id="stats-body"></div>
-    <div class="st-erase">
-      <p class="hint">Everything here is saved only in this browser. Erasing removes your records, stats and settings, and cannot be undone.</p>
+    <div class="st-foot">
+      <p class="hint">Saved only in this browser. Erasing removes your records, stats and settings and cannot be undone. <span id="erase-note" role="status"></span></p>
       <button id="btn-erase" class="btn ghost danger" type="button">Erase all saved data</button>
-      <p id="erase-note" class="hint" role="status"></p>
+      <button id="btn-stats-ok" class="btn primary" type="button">Done</button>
     </div>
-    <button id="btn-stats-ok" class="btn primary" type="button">Done</button>
   </div>
 </div>
 
@@ -2147,7 +2158,7 @@ function renderStats() {
   const maxLen = Math.max(1, ...LEN_BUCKETS.map((b) => d.lens[b]));
   const bars = LEN_BUCKETS.map((b) => `<div class="st-bar"><span>${b}</span><i style="--w:${(d.lens[b] / maxLen * 100).toFixed(1)}%"></i><em>${n(d.lens[b])}</em></div>`).join('');
   const diffName = { easy: 'Easy', medium: 'Medium', master: 'Master' };
-  statsBody.innerHTML = [
+  const groups = [
     group('Records', [
       row('best score', n(records.score.score), records.score.streak !== null && records.score.score ? `streak ${n(records.score.streak)}` : ''),
       row('best streak', n(records.streak.streak), records.streak.score !== null && records.streak.streak ? `score ${n(records.streak.score)}` : ''),
@@ -2182,10 +2193,12 @@ function renderStats() {
       row('words that were not in the dictionary', n(d.badGuesses)),
       row('words found by online lookup', n(d.onlineWords))
     ]),
-    group('Streak milestones', MILESTONES.map((m) => row('reached ' + m, n(d.milestones[m]) + (d.milestones[m] === 1 ? ' time' : ' times')))),
+    group('Streak milestones', [`<div class="st-miles">${MILESTONES.map((m) => `<div><span>${m}</span><b>${n(d.milestones[m])}&times;</b></div>`).join('')}</div>`]),
     group('By opponent', ['easy', 'medium', 'master'].map((k) => row(diffName[k], n(d.byDiff[k].games) + ' matches', 'best streak ' + n(d.byDiff[k].best)))),
-    d.lastPlayed ? `<p class="hint">Last played ${new Date(d.lastPlayed).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}.</p>` : ''
-  ].join('');
+  ];
+  const last = d.lastPlayed ? `<p class="hint">Last played ${new Date(d.lastPlayed).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}.</p>` : '';
+  const col = (...i) => `<div class="st-col">${i.map((k) => groups[k]).join('')}</div>`;
+  statsBody.innerHTML = col(0, 4) + col(1, 5) + `<div class="st-col">${groups[2]}${groups[3]}${groups[6]}${groups[7]}${last}</div>`;
 }
 function toggleStats(show) {
   if (!modalStats) return;
