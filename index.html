@@ -188,8 +188,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .odds { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
 #prob-stage-label { font-size: 12px; color: var(--dim); letter-spacing: .04em; }
-.odds-list { display: flex; gap: 16px; }
-.odd { --w: 0%; min-width: 70px; }
+.odds { flex-direction: column; align-items: stretch; gap: 8px; }
+.odds-list { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.odd { --w: 0%; min-width: 0; transition: opacity .4s; }
+.odd.zero { opacity: .35; }
 .odd div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
 .odd span { font-size: 11px; color: var(--dim); }
 .odd b { font-family: var(--mono); font-weight: 500; font-size: 12px; color: var(--lapis-soft); }
@@ -498,6 +500,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .sea-deep::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(0, 0, 0, .5) 100%); }
 
 .light { transition: opacity 5s ease; }
+.mode-btn:disabled:not(.is-active), .opponent select:disabled, #btn-start:disabled { cursor: not-allowed; }
+.mode-btn:disabled:not(.is-active) { opacity: .4; }
+.opponent select:disabled { opacity: .5; }
 body.previewing .sea, body.previewing .light, body.previewing .sea-structure { transition-duration: 1.2s; }
 .modal { transition: background .35s, backdrop-filter .35s; }
 .modal.peek { background: rgba(2, 6, 16, 0); backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -609,7 +614,6 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   .prefix { font-size: 54px; }
   .prefix.any { font-size: 34px; }
   .sugs-grid { grid-template-columns: minmax(0, 1fr); }
-  .odds { flex-direction: column; align-items: flex-start; }
   .mode-btn { padding: 7px 10px; }
   .stage { padding: 26px 18px 22px; }
   .score-row { grid-template-columns: 1fr 1fr; row-gap: 12px; }
@@ -632,7 +636,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.9</p>
+      <p>version 1.0</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -697,7 +701,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
           <button type="button" data-rule="3" class="mode-btn">3 letters</button>
         </div>
         <label class="opponent">
-          <span>opponent</span>
+          <span>type of gem</span>
           <select id="ai-difficulty">
             <option value="easy">Broken, short and simple</option>
             <option value="medium" selected>Impure, varied and steady</option>
@@ -712,11 +716,14 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
       </section>
 
       <section class="odds" aria-label="Tail length odds">
-        <span id="prob-stage-label">Phase 1: Warmup (streak 0-49)</span>
+        <span id="prob-stage-label">Phase 0: Shallows (streak 0-49)</span>
         <div class="odds-list">
-          <div class="odd" id="odd-1"><div><span>1 letter</span><b id="prob-val-1">75%</b></div><i></i></div>
-          <div class="odd" id="odd-2"><div><span>2 letters</span><b id="prob-val-2">20%</b></div><i></i></div>
-          <div class="odd" id="odd-3"><div><span>3 letters</span><b id="prob-val-3">5%</b></div><i></i></div>
+          <div class="odd" id="odd-1" title="1 matching letter"><div><span>1</span><b id="prob-val-1">0%</b></div><i></i></div>
+          <div class="odd" id="odd-2" title="2 matching letters"><div><span>2</span><b id="prob-val-2">0%</b></div><i></i></div>
+          <div class="odd" id="odd-3" title="3 matching letters"><div><span>3</span><b id="prob-val-3">0%</b></div><i></i></div>
+          <div class="odd" id="odd-4" title="4 matching letters"><div><span>4</span><b id="prob-val-4">0%</b></div><i></i></div>
+          <div class="odd" id="odd-5" title="5 matching letters"><div><span>5</span><b id="prob-val-5">0%</b></div><i></i></div>
+          <div class="odd" id="odd-6" title="6 matching letters"><div><span>6</span><b id="prob-val-6">0%</b></div><i></i></div>
         </div>
       </section>
 
@@ -756,7 +763,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
       <li><span>2 letters</span><span>drag<span class="tail">on</span> &rarr; <span class="tail">on</span>line</span></li>
       <li><span>3 letters</span><span>compu<span class="tail">ter</span> &rarr; <span class="tail">ter</span>rain</span></li>
     </ul>
-    <p>The water gets deeper as your streak grows, down to the abyss at a streak of 250, and the sound follows it. In escalating mode, past a streak of 50, two and three letter tails become common, and past 150 they take over.</p>
+    <p>The water gets deeper as your streak grows, down to the abyss at a streak of 250, and the sound follows it. In escalating mode the match gets longer too: every 50 of streak is a new phase, from phase 0 to phase 5 at 250. Early on you mostly match one letter. By the abyss you can need four or five, and, very rarely, six.</p>
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
     <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Your opponent is a lapis lazuli gem. A Broken gem plays short, simple words and leaves you easy endings, an Impure gem plays a wider, steadier range of words, and a Perfect gem picks words that leave you the fewest ways to answer. "Common words only" limits you and the gem to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
@@ -904,8 +911,10 @@ let dictionaryArray = [];
 let commonRank = new Map();      // everyday word -> rank (0 = most common)
 let idxAll = new Map();         // prefix (1-3 letters) -> plain words, easiest first
 let idxCommon = new Map();      // same, everyday words only
+let sortedAll = [], sortedCommon = [];   // alphabetical lists, used to find words by 4 to 6 starting letters
 let strictSet = new Set();
 let strictAvailable = false;
+let dictionaryReady = false;
 let strictMode = false;
 let usedWords = new Set();
 let currentRule = "weighted";
@@ -985,15 +994,38 @@ function buildIndex(words) {
 
 function currentIndex() { return strictMode ? idxCommon : idxAll; }
 
+// words in an alphabetical list that start with a prefix: [first, end) positions
+function prefixRange(arr, prefix) {
+  const bound = (key) => { let lo = 0, hi = arr.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < key) lo = mid + 1; else hi = mid; } return lo; };
+  return [bound(prefix), bound(prefix + '\uffff')];
+}
+const sortedList = () => (strictMode ? sortedCommon : sortedAll);
+
+// how many words start with this prefix (cheap, nothing is built)
+function prefixCount(prefix) {
+  if (prefix.length <= 3) { const a = currentIndex().get(prefix); return a ? a.length : 0; }
+  const r = prefixRange(sortedList(), prefix);
+  return r[1] - r[0];
+}
+
 function usableWords(prefix) {
-  const src = currentIndex().get(prefix);
-  return src ? src.filter(w => !usedWords.has(w)) : [];
+  if (prefix.length <= 3) {
+    const src = currentIndex().get(prefix);
+    return src ? src.filter(w => !usedWords.has(w)) : [];
+  }
+  const arr = sortedList(), r = prefixRange(arr, prefix);
+  return sortByComplexity(arr.slice(r[0], r[1]).filter(w => !usedWords.has(w)));
 }
 
 function hasUsable(prefix) {
-  const src = currentIndex().get(prefix);
-  if (!src) return false;
-  for (const w of src) if (!usedWords.has(w)) return true;
+  if (prefix.length <= 3) {
+    const src = currentIndex().get(prefix);
+    if (!src) return false;
+    for (const w of src) if (!usedWords.has(w)) return true;
+    return false;
+  }
+  const arr = sortedList(), r = prefixRange(arr, prefix);
+  for (let i = r[0]; i < r[1]; i++) if (!usedWords.has(arr[i])) return true;
   return false;
 }
 
@@ -1036,9 +1068,11 @@ function installDictionary(everything, plainList, commonList) {
   const plainSet = new Set(plainList);
   dictionaryArray = sortByComplexity(plainList);
   idxAll = buildIndex(dictionaryArray);
+  sortedAll = plainList.slice().sort();
   const commonPlain = commonList.filter(w => plainSet.has(w));
   strictSet = new Set(commonPlain);
   idxCommon = buildIndex(sortByComplexity(commonPlain));
+  sortedCommon = commonPlain.slice().sort();
   strictAvailable = commonPlain.length > 500;
   applyStrictAvailability();
 }
@@ -1074,6 +1108,7 @@ const COMMON_URLS = ['common.txt'];
 
 async function loadDictionary() {
   installDictionary(new Set(builtInFallbackWords), [...builtInFallbackWords], []);
+  dictionaryReady = true;
   if (btnStart) btnStart.disabled = false;
   setDictStatus('<span class="dot loading"></span>loading the full dictionary');
 
@@ -1104,15 +1139,19 @@ async function loadDictionary() {
 /* ---------- settings ---------- */
 if (aiDifficultySelect) {
   aiDifficultySelect.addEventListener('change', (e) => {
+    if (isGameActive) { e.target.value = aiDifficulty; return; }
     aiDifficulty = e.target.value;
   });
 }
 
-// the switch is locked while a match is running, so nobody can change the rules mid-game
+// everything that changes the rules is locked while a match is running (opponent, tail length, common words, Start)
 function syncStrictLock() {
-  if (!strictToggle) return;
+  if (!strictToggle) { return; }
   const label = strictToggle.closest('.toggle');
   const locked = isGameActive || !strictAvailable;
+  if (aiDifficultySelect) aiDifficultySelect.disabled = isGameActive;
+  if (btnStart) btnStart.disabled = isGameActive || !dictionaryReady;
+  modeBtns.forEach((b) => { b.disabled = isGameActive; });
   strictToggle.disabled = locked;
   if (label) {
     label.classList.toggle('is-disabled', locked);
@@ -1124,45 +1163,39 @@ if (strictToggle) {
   strictToggle.addEventListener('change', () => { if (isGameActive) { strictToggle.checked = strictMode; return; } strictMode = strictToggle.checked; });
 }
 
-let pendingRule = null;
-let pendingRuleTimer = null;
 modeBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    if (btn.dataset.rule === currentRule) return;
-    // switching mid-match restarts it, so ask with a second press (no pop-up, the timer keeps running)
-    if (isGameActive && usedWords.size > 0 && pendingRule !== btn.dataset.rule) {
-      pendingRule = btn.dataset.rule;
-      clearTimeout(pendingRuleTimer);
-      pendingRuleTimer = setTimeout(() => { pendingRule = null; }, 3000);
-      showStatus(`Press "${btn.textContent.trim()}" again to switch rules and restart the match.`, "info");
-      return;
-    }
-    pendingRule = null;
+    if (isGameActive || btn.dataset.rule === currentRule) return;
     modeBtns.forEach(b => b.classList.remove('is-active'));
     btn.classList.add('is-active');
 
     currentRule = btn.dataset.rule;
-    if (isGameActive) resetGame();
-    else updateProbabilityUI();
+    updateProbabilityUI();
   });
 });
 
+// six phases, one every 50 of streak: the chance (in percent) of needing to match 1, 2, 3, 4, 5 or 6 letters
+const PHASES = [
+  ['Shallows', [75, 20, 5, 0, 0, 0]],
+  ['Drifting', [50, 35, 13, 2, 0, 0]],
+  ['Sinking',  [30, 42, 22, 6, 0, 0]],
+  ['Twilight', [18, 38, 30, 12, 2, 0]],
+  ['Midnight', [10, 32, 34, 19, 5, 0]],
+  ['Abyss',    [5, 25, 35, 24, 10.5, 0.5]]
+];
+
 function getProbabilities() {
-  if (streak < 50) {
-    return { stage: "Phase 1: Warmup (streak 0-49)", p1: 75, p2: 20, p3: 5 };
-  } else if (streak < 150) {
-    return { stage: "Phase 2: Escalating (streak 50-149)", p1: 30, p2: 50, p3: 20 };
-  } else {
-    return { stage: "Phase 3: High intensity (streak 150+)", p1: 10, p2: 35, p3: 55 };
-  }
+  const i = Math.min(PHASES.length - 1, Math.floor(streak / 50));
+  const range = i === PHASES.length - 1 ? `${i * 50}+` : `${i * 50}-${i * 50 + 49}`;
+  return { phase: i, stage: `Phase ${i}: ${PHASES[i][0]} (streak ${range})`, p: PHASES[i][1] };
 }
 
-function setOdds(p1, p2, p3) {
-  [[1, p1], [2, p2], [3, p3]].forEach(([n, v]) => {
-    const val = document.getElementById('prob-val-' + n);
-    const box = document.getElementById('odd-' + n);
+function setOdds(list) {
+  list.forEach((v, i) => {
+    const val = document.getElementById('prob-val-' + (i + 1));
+    const box = document.getElementById('odd-' + (i + 1));
     if (val) val.textContent = v + '%';
-    if (box) box.style.setProperty('--w', v + '%');
+    if (box) { box.style.setProperty('--w', v + '%'); box.classList.toggle('zero', v === 0); }
   });
 }
 
@@ -1170,12 +1203,12 @@ function updateProbabilityUI() {
   if (currentRule !== 'weighted') {
     const n = parseInt(currentRule);
     if (probStageLabel) probStageLabel.textContent = `Fixed at ${n} letter${n === 1 ? '' : 's'}`;
-    setOdds(n === 1 ? 100 : 0, n === 2 ? 100 : 0, n === 3 ? 100 : 0);
+    setOdds([1, 2, 3, 4, 5, 6].map((k) => (k === n ? 100 : 0)));
     return;
   }
   const p = getProbabilities();
   if (probStageLabel) probStageLabel.textContent = p.stage;
-  setOdds(p.p1, p.p2, p.p3);
+  setOdds(p.p);
 }
 
 function calculateNextTailLength(lastWord) {
@@ -1185,11 +1218,10 @@ function calculateNextTailLength(lastWord) {
   if (currentRule !== 'weighted') {
     targetLen = parseInt(currentRule);
   } else {
-    const p = getProbabilities();
+    const p = getProbabilities().p;
     const roll = Math.random() * 100;
-    if (roll < p.p1) targetLen = 1;
-    else if (roll < p.p1 + p.p2) targetLen = 2;
-    else targetLen = 3;
+    let acc = 0;
+    for (let i = 0; i < p.length; i++) { acc += p[i]; if (roll < acc) { targetLen = i + 1; break; } }
   }
 
   targetLen = Math.min(targetLen, Math.max(1, lastWord.length - 1));
@@ -1278,9 +1310,11 @@ function resetGame() {
 
 let lookupBudgetMs = 0;   // how much online-lookup time may be paused this turn
 
+let turnDeadline = 0;     // when this turn ends, by the real clock
+
 function tickTimer() {
-  timeLeft--;
-  updateTimerDisplay();
+  const left = Math.max(0, Math.ceil((turnDeadline - Date.now()) / 1000));
+  if (left !== timeLeft) { timeLeft = left; updateTimerDisplay(); }
   if (timeLeft <= 0) {
     clearInterval(turnTimer);
     handleTimeOut();
@@ -1291,15 +1325,16 @@ function startTimer() {
   clearInterval(turnTimer);
   timeLeft = TURN_SECONDS;
   lookupBudgetMs = 6000;
+  turnDeadline = Date.now() + TURN_SECONDS * 1000;
   if (timerBar) timerBar.classList.add('snap');
   updateTimerDisplay();
   if (timerBar) { void timerBar.offsetWidth; timerBar.classList.remove('snap'); }
-  turnTimer = setInterval(tickTimer, 1000);
+  turnTimer = setInterval(tickTimer, 250);
 }
 
 function resumeTimer() {
   clearInterval(turnTimer);
-  turnTimer = setInterval(tickTimer, 1000);
+  turnTimer = setInterval(tickTimer, 250);
 }
 
 function updateTimerDisplay() {
@@ -1326,6 +1361,12 @@ if (wordForm) {
 
     if (requiredPrefix && !word.startsWith(requiredPrefix)) {
       showStatus(`The word has to start with "${requiredPrefix.toUpperCase()}".`, "error");
+      shakeInput();
+      return;
+    }
+
+    if (!/^[a-z]+$/.test(word)) {
+      showStatus("Words can only use the letters A to Z.", "error");
       shakeInput();
       return;
     }
@@ -1358,7 +1399,9 @@ if (wordForm) {
       const found = await existsOnline(word);
       checkingOnline = false;
       if (paused) {
-        lookupBudgetMs -= Date.now() - startedAt;
+        const spent = Date.now() - startedAt;
+        turnDeadline += Math.min(spent, lookupBudgetMs);   // the clock waits, but only while the budget lasts
+        lookupBudgetMs -= Math.max(spent, 1000);           // every lookup costs at least a second of it
         if (isGameActive && isPlayerTurn && found !== true) resumeTimer();
       }
       if (!isGameActive || !isPlayerTurn) return;
@@ -1418,21 +1461,22 @@ function playWord(word, player) {
 function tailOdds() {
   if (currentRule !== 'weighted') {
     const n = parseInt(currentRule);
-    return { 1: n === 1 ? 1 : 0, 2: n === 2 ? 1 : 0, 3: n === 3 ? 1 : 0 };
+    const o = {};
+    for (let k = 1; k <= 6; k++) o[k] = k === n ? 1 : 0;
+    return o;
   }
-  const p = getProbabilities();
-  return { 1: p.p1 / 100, 2: p.p2 / 100, 3: p.p3 / 100 };
+  const p = getProbabilities().p, o = {};
+  p.forEach((v, i) => { o[i + 1] = v / 100; });
+  return o;
 }
 
 // Master: choose the word that leaves you the fewest words to answer with
 // how many words the player could answer with, on average, after this word (higher = friendlier)
 function tailScore(w, odds) {
-  const src = currentIndex();
   let sc = 0;
-  for (let n = 1; n <= 3; n++) {
+  for (let n = 1; n <= 6; n++) {
     if (!odds[n] || w.length <= n) continue;
-    const left = src.get(w.slice(-n));
-    sc += odds[n] * (left ? left.length : 0);
+    sc += odds[n] * prefixCount(w.slice(-n));
   }
   return sc;
 }
@@ -1629,6 +1673,29 @@ function prepareInput() {
   playerInput.focus();
   const n = playerInput.value.length;
   try { playerInput.setSelectionRange(n, n); } catch (e) {}
+}
+
+// words have to be typed: no pasting, dropping text in, or tapping a replacement suggestion
+if (playerInput) {
+  playerInput.setAttribute('autocorrect', 'off');
+  const refuse = (e) => { e.preventDefault(); if (isGameActive) { showStatus('Words have to be typed. Pasting is turned off.', 'error'); shakeInput(); } };
+  ['paste', 'drop'].forEach((t) => playerInput.addEventListener(t, refuse));
+  // swipe typing and tapped suggestions put a whole word in at once; real typing adds a letter at a time
+  let before = '';
+  playerInput.addEventListener('beforeinput', () => { before = playerInput.value; });
+  playerInput.addEventListener('focus', () => { before = playerInput.value; });
+  playerInput.addEventListener('input', () => {
+    if (isGameActive && playerInput.value.length - before.length > 2) {
+      playerInput.value = before;
+      showStatus('Swipe typing and word suggestions are turned off. Type the letters one by one.', 'error');
+      shakeInput();
+      return;
+    }
+    before = playerInput.value;
+  });
+  playerInput.addEventListener('beforeinput', (e) => {
+    if (['insertFromPaste', 'insertFromPasteAsQuotation', 'insertFromDrop', 'insertReplacementText', 'insertFromYank'].includes(e.inputType)) refuse(e);
+  });
 }
 
 if (playerInput) {
@@ -2261,7 +2328,7 @@ function freshStats() {
     words: 0, letters: 0, totalScore: 0, playMs: 0, badGuesses: 0, onlineWords: 0,
     longest: { word: '', len: 0 }, bestWord: { word: '', points: 0 },
     answerSecs: 0, answers: 0, fastest: null, streakSum: 0, longestGame: 0, lastPlayed: 0,
-    tails: { 1: 0, 2: 0, 3: 0 },
+    tails: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
     lens: { '2-4': 0, '5-6': 0, '7-8': 0, '9-10': 0, '11+': 0 },
     milestones: { 10: 0, 25: 0, 50: 0, 100: 0, 150: 0, 250: 0 },
     byDiff: { easy: { games: 0, best: 0 }, medium: { games: 0, best: 0 }, master: { games: 0, best: 0 } }
@@ -2365,9 +2432,7 @@ function renderStats() {
       row('average answer time', avg(d.answerSecs, d.answers), d.answers ? 'seconds' : '')
     ]),
     group('Word lengths', [`<div class="st-bars">${bars}</div>`]),
-    group('Matching letters', [
-      row('1 letter', n(d.tails[1])), row('2 letters', n(d.tails[2])), row('3 letters', n(d.tails[3]))
-    ]),
+    group('Matching letters', [`<div class="st-miles">${[1, 2, 3, 4, 5, 6].map((k) => `<div><span>${k} letter${k > 1 ? 's' : ''}</span><b>${n(d.tails[k])}</b></div>`).join('')}</div>`]),
     group('How matches ended', [
       row('you gave up', n(d.causes.gaveUp)), row('your time ran out', n(d.causes.timeout)),
       row('out of guesses', n(d.causes.guesses)), row('the gem ran out of time', n(d.causes.aiTime)),
