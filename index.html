@@ -637,7 +637,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 1.1</p>
+      <p>version 1.2</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -770,7 +770,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
     </ul>
     <p>The water gets deeper as your streak grows, down to the abyss at a streak of 250, and the sound follows it. In escalating mode the match gets longer too: every 50 of streak is a new phase, from phase 0 to phase 5 at 250. Early on you mostly match one letter. By the abyss you can need four or five, and, very rarely, six.</p>
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
-    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Your opponent is a lapis lazuli gem. A Broken gem plays short, simple words and leaves you easy endings, an Impure gem plays a wider, steadier range of words, and a Perfect gem picks words that leave you the fewest ways to answer. "Common words only" limits you and the gem to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
+    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Your opponent is a lapis lazuli gem. A Broken gem only knows everyday words, plays short simple ones and leaves you easy endings, and it loses when it runs out. An Impure gem plays everyday words first, then, when none are left, finds a rarer word 9 times in 10 and is stuck the other time. A Perfect gem knows every word and picks the ones that leave you the fewest ways to answer. You are not meant to beat a Perfect gem. "Common words only" limits you and the gem to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
   </div>
 </div>
@@ -997,28 +997,29 @@ function buildIndex(words) {
   return m;
 }
 
-function currentIndex() { return strictMode ? idxCommon : idxAll; }
+function currentIndex(common) { return (strictMode || common) ? idxCommon : idxAll; }
 
 // words in an alphabetical list that start with a prefix: [first, end) positions
 function prefixRange(arr, prefix) {
   const bound = (key) => { let lo = 0, hi = arr.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid] < key) lo = mid + 1; else hi = mid; } return lo; };
   return [bound(prefix), bound(prefix + '\uffff')];
 }
-const sortedList = () => (strictMode ? sortedCommon : sortedAll);
+const sortedList = (common) => ((strictMode || common) ? sortedCommon : sortedAll);
 
 // how many words start with this prefix (cheap, nothing is built)
-function prefixCount(prefix) {
-  if (prefix.length <= 3) { const a = currentIndex().get(prefix); return a ? a.length : 0; }
-  const r = prefixRange(sortedList(), prefix);
+function prefixCount(prefix, common) {
+  if (prefix.length <= 3) { const a = currentIndex(common).get(prefix); return a ? a.length : 0; }
+  const r = prefixRange(sortedList(common), prefix);
   return r[1] - r[0];
 }
 
-function usableWords(prefix) {
+// common = true looks only in the everyday list (common.txt), whatever mode you are playing in
+function usableWords(prefix, common) {
   if (prefix.length <= 3) {
-    const src = currentIndex().get(prefix);
+    const src = currentIndex(common).get(prefix);
     return src ? src.filter(w => !usedWords.has(w)) : [];
   }
-  const arr = sortedList(), r = prefixRange(arr, prefix);
+  const arr = sortedList(common), r = prefixRange(arr, prefix);
   return sortByComplexity(arr.slice(r[0], r[1]).filter(w => !usedWords.has(w)));
 }
 
@@ -1527,8 +1528,20 @@ function pickTrapWord(list) {
   return best || list[0];
 }
 
+// what each gem knows: Broken only the everyday words, Impure the everyday words first and,
+// when those run out, the full list 90% of the time (10% of the time it is stuck), Perfect everything
+function gemWords(prefix) {
+  if (aiDifficulty === 'easy') return usableWords(prefix, true);
+  if (aiDifficulty === 'medium') {
+    const everyday = usableWords(prefix, true);
+    if (everyday.length) return everyday;
+    return Math.random() < 0.9 ? usableWords(prefix, false) : [];
+  }
+  return usableWords(prefix, false);
+}
+
 function pickAiWord() {
-  const all = usableWords(requiredPrefix);
+  const all = gemWords(requiredPrefix);
   if (all.length === 0) return null;
   // prefer everyday words so the AI does not play obscure junk
   const everyday = strictMode ? all : all.filter(w => commonRank.has(w));
@@ -1571,7 +1584,10 @@ function aiPlayTurn() {
 
   const selectedWord = pickAiWord();
   if (!selectedWord) {
-    playerWins(`The gem could not find a word starting with "${requiredPrefix.toUpperCase()}".`);
+    const P = requiredPrefix.toUpperCase();
+    playerWins(aiDifficulty === 'easy' ? `A broken gem only knows everyday words, and it has none left starting with "${P}".`
+      : aiDifficulty === 'medium' ? `The impure gem could not find a word starting with "${P}".`
+      : `The gem could not find a word starting with "${P}".`);
     return;
   }
 

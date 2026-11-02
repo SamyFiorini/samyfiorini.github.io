@@ -57,9 +57,9 @@ The **stats** panel keeps records, totals, averages, word lengths, how your matc
 
 Your opponent is a lapis lazuli gem. Pick its quality next to the chain.
 
-- **Broken** plays short, very common words (3 to 6 letters) and picks the ones that leave you the most ways to answer, often avoiding plurals. It also takes a little longer to reply.
-- **Impure** plays a wider and steadier range of everyday words, longer ones included, and avoids dead ends, but has no plan against you.
-- **Perfect** picks words that leave you the fewest ways to answer.
+- **Broken** only knows the everyday words in `common.txt`. It plays short, very common words, picks the ones that leave you the most ways to answer, and often avoids plurals. When it has no everyday word left for the letters you gave it, it loses.
+- **Impure** plays everyday words first. When none are left, it finds a word in the full `words.txt` list 9 times in 10, and loses the other 1 time in 10. It plays a wide range of words and avoids dead ends, but has no plan against you.
+- **Perfect** knows every word and picks the ones that leave you the fewest ways to answer. You are not meant to beat it.
 
 ### Other options
 
