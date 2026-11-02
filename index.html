@@ -478,6 +478,25 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     radial-gradient(45% 35% at 18% 92%, rgba(24, 110, 104, .12), transparent 70%),
     linear-gradient(180deg, #040a18 0%, #02060f 55%, #010308 100%);
 }
+.sea-structure {
+  position: fixed;
+  right: 3%;
+  bottom: -2%;
+  width: min(30vw, 340px);
+  height: 92vh;
+  pointer-events: none;
+  opacity: 0;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 700' fill='none' stroke='%234f74c4' stroke-width='5' stroke-linecap='square'><path d='M110 700V40M190 700V90'/><path d='M110 640L190 560L110 480L190 400L110 320L190 240L110 160L190 90'/><path d='M190 640L110 560L190 480L110 400L190 320L110 240L190 160L110 90' stroke-width='3'/><path d='M110 40L10 110M110 40H20M190 330H290L280 400M110 520H40L22 600' stroke-width='4'/><path d='M60 700V560M240 700V610' stroke-width='3'/></svg>") no-repeat bottom center / contain;
+  filter: blur(2.5px);
+  -webkit-mask-image: linear-gradient(0deg, #000 25%, transparent 92%);
+          mask-image: linear-gradient(0deg, #000 25%, transparent 92%);
+  transform-origin: 50% 100%;
+  transition: opacity 6s ease;
+  animation: structure-sway 22s ease-in-out infinite alternate;
+}
+@keyframes structure-sway { from { transform: rotate(-.7deg); } to { transform: rotate(.9deg); } }
+.sea-deep::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(0, 0, 0, .5) 100%); }
+
 .light { transition: opacity 5s ease; }
 
 .top-links { display: flex; align-items: baseline; gap: 20px; }
@@ -600,6 +619,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
 
 <div id="sea-mid" class="sea sea-mid" aria-hidden="true"></div>
 <div id="sea-deep" class="sea sea-deep" aria-hidden="true"></div>
+<div id="sea-structure" class="sea-structure" aria-hidden="true"></div>
 <div class="light" aria-hidden="true"></div>
 <canvas id="particles" aria-hidden="true"></canvas>
 
@@ -608,7 +628,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 0.7</p>
+      <p>version 0.8</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -675,12 +695,12 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
         <label class="opponent">
           <span>opponent</span>
           <select id="ai-difficulty">
-            <option value="easy">Easy, simple words</option>
-            <option value="medium" selected>Medium, standard</option>
-            <option value="master">Master, sets traps</option>
+            <option value="easy">Broken, short and simple</option>
+            <option value="medium" selected>Impure, varied and steady</option>
+            <option value="master">Perfect, sets traps</option>
           </select>
         </label>
-        <label class="toggle" title="Only everyday words, for you and the AI">
+        <label class="toggle" title="Only everyday words, for you and the gem">
           <input type="checkbox" id="strict-mode" disabled>
           <span class="switch" aria-hidden="true"></span>
           <span>common words only</span>
@@ -734,7 +754,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
     </ul>
     <p>The water gets deeper as your streak grows, down to the abyss at a streak of 250, and the sound follows it. In escalating mode, past a streak of 50, two and three letter tails become common, and past 150 they take over.</p>
     <p><strong style="color:var(--foam);font-weight:500">Scoring.</strong> Every word is worth 10 points per letter. Words longer than 5 letters earn a growing bonus, with no limit. Matching 2 letters multiplies the word by 1.5 and 3 letters by 2. Each word you play in a row adds 0.05 to a streak multiplier, with no upper limit. The streak resets when a match ends.</p>
-    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Master picks words that leave you the fewest ways to answer. "Common words only" limits you and the AI to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
+    <p><strong style="color:var(--foam);font-weight:500">Good to know.</strong> You get 5 tries per word: every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used do not cost a bubble. Your opponent is a lapis lazuli gem. A Broken gem plays short, simple words and leaves you easy endings, an Impure gem plays a wider, steadier range of words, and a Perfect gem picks words that leave you the fewest ways to answer. "Common words only" limits you and the gem to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn.</p>
     <button id="btn-modal-ok" class="btn primary" type="button">Got it</button>
   </div>
 </div>
@@ -768,7 +788,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
         <span class="switch" aria-hidden="true"></span>
         <span>ocean sound</span>
       </label>
-      <p class="hint">Made live in your browser, so there is nothing to download. It fades in quietly and changes as you go deeper: the surface is bright with soft chimes, the deep is dark, slow and almost empty.</p>
+      <p class="hint">Made live in your browser, so there is nothing to download. It fades in quietly and changes as you go deeper: the surface is bright with soft chimes, and the deep gets dark and uneasy, with bubbles, groaning metal and slow, low swells.</p>
       <p id="sound-note" class="hint" role="status"></p>
       <div class="slider"><label for="set-volume">volume</label><input type="range" id="set-volume" min="0" max="100"><output id="out-volume"></output></div>
       <details class="mix">
@@ -779,6 +799,9 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
           <div class="slider"><label for="set-chimes">chimes</label><input type="range" id="set-chimes" min="0" max="100"><output id="out-chimes"></output></div>
           <div class="slider"><label for="set-drone">deep hum</label><input type="range" id="set-drone" min="0" max="100"><output id="out-drone"></output></div>
           <div class="slider"><label for="set-calls">calls</label><input type="range" id="set-calls" min="0" max="100"><output id="out-calls"></output></div>
+          <div class="slider"><label for="set-bubbles">bubbles</label><input type="range" id="set-bubbles" min="0" max="100"><output id="out-bubbles"></output></div>
+          <div class="slider"><label for="set-metal">metal</label><input type="range" id="set-metal" min="0" max="100"><output id="out-metal"></output></div>
+          <div class="slider"><label for="set-dread">dread</label><input type="range" id="set-dread" min="0" max="100"><output id="out-dread"></output></div>
         </div>
       </details>
     </section>
@@ -808,6 +831,7 @@ let visualDepth = 0;
   const ctx = c.getContext('2d');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let w = 0, h = 0, specks = [], shown = 0;
+  const bubs = [];
 
   function make(anywhere) {
     return {
@@ -835,6 +859,18 @@ let visualDepth = 0;
     ctx.clearRect(0, 0, w, h);
     shown += (visualDepth - shown) * 0.01;
     const glowK = Math.min(1, Math.max(0, (shown - 0.4) / 0.4));
+    if (!reduce && Math.random() < 0.012 + 0.04 * shown) {
+      bubs.push({ x: Math.random() * w, y: h + 12, r: 1.5 + Math.random() * 3.5, v: 0.5 + Math.random() * 0.7, d: Math.random() * 6.28, a: 0.16 + Math.random() * 0.2 });
+    }
+    for (let i = bubs.length - 1; i >= 0; i--) {
+      const b = bubs[i];
+      b.y -= b.v; b.x += Math.sin(t / 700 + b.d) * 0.35;
+      if (b.y < -12) { bubs.splice(i, 1); continue; }
+      ctx.beginPath(); ctx.lineWidth = 0.9; ctx.strokeStyle = `rgba(190,215,255,${b.a})`;
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.fillStyle = `rgba(230,240,255,${b.a + 0.1})`;
+      ctx.arc(b.x - b.r * 0.35, b.y - b.r * 0.35, Math.max(0.5, b.r * 0.2), 0, Math.PI * 2); ctx.fill();
+    }
     for (const s of specks) {
       s.y -= s.v * (1 - 0.45 * shown);
       s.x += Math.sin(t / 4000 + s.d) * 0.12;
@@ -880,6 +916,7 @@ let streak = 0;
 let isGameActive = false;
 let matchWords = 0;   // words the player has played this match
 let aiDifficulty = "medium";
+const TIER_NAME = { easy: 'broken', medium: 'impure', master: 'perfect' };
 
 const EMPTY_HTML = '<div class="empty">The water is still. Press start when you are ready.</div>';
 
@@ -1008,7 +1045,7 @@ function applyStrictAvailability() {
   strictToggle.disabled = !strictAvailable;
   if (label) {
     label.classList.toggle('is-disabled', !strictAvailable);
-    label.title = strictAvailable ? 'Only everyday words, for you and the AI' : 'The everyday words list (common.txt) could not be loaded';
+    label.title = strictAvailable ? 'Only everyday words, for you and the gem' : 'The everyday words list (common.txt) could not be loaded';
   }
   if (!strictAvailable) strictMode = false;
   strictToggle.checked = strictMode;
@@ -1256,7 +1293,7 @@ function handleTimeOut() {
   if (isPlayerTurn) {
     gameOver("Time ran out.");
   } else {
-    playerWins("The AI ran out of time.");
+    playerWins("The gem ran out of time.");
   }
 }
 
@@ -1326,9 +1363,9 @@ if (wordForm) {
       isPlayerTurn = false;
       playerInput.disabled = true;
       btnSubmit.disabled = true;
-      showStatus("The AI is thinking...", "info");
+      showStatus("The gem is thinking...", "info");
 
-      const delay = Math.floor(Math.random() * 800) + 600;
+      const delay = Math.floor(Math.random() * 800) + 600 + (aiDifficulty === 'easy' ? 900 : 0);
       setTimeout(aiPlayTurn, delay);
     }
   });
@@ -1369,18 +1406,24 @@ function tailOdds() {
 }
 
 // Master: choose the word that leaves you the fewest words to answer with
+// how many words the player could answer with, on average, after this word (higher = friendlier)
+function tailScore(w, odds) {
+  const src = currentIndex();
+  let sc = 0;
+  for (let n = 1; n <= 3; n++) {
+    if (!odds[n] || w.length <= n) continue;
+    const left = src.get(w.slice(-n));
+    sc += odds[n] * (left ? left.length : 0);
+  }
+  return sc;
+}
+
 function pickTrapWord(list) {
   const odds = tailOdds();
-  const src = currentIndex();
   let best = null;
   let bestScore = Infinity;
   for (const w of list.slice(0, 400)) {
-    let s = 0;
-    for (let n = 1; n <= 3; n++) {
-      if (!odds[n] || w.length <= n) continue;
-      const left = src.get(w.slice(-n));
-      s += odds[n] * (left ? left.length : 0);
-    }
+    const s = tailScore(w, odds);
     if (s < bestScore || (s === bestScore && best && w.length > best.length)) {
       best = w;
       bestScore = s;
@@ -1397,8 +1440,23 @@ function pickAiWord() {
   let nice = everyday.length >= 5 ? everyday : all;
   const longer = nice.filter(w => w.length >= 3);          // skip two-letter oddities when there are choices
   if (longer.length >= 5) nice = longer;
-  if (aiDifficulty === "easy") return nice[Math.floor(Math.random() * Math.min(nice.length, 5))];
-  if (aiDifficulty === "medium") return nice[Math.floor(Math.random() * Math.min(nice.length, 15))];
+  const odds = tailOdds();
+  if (aiDifficulty === "easy") {
+    // Broken: short, very common words, and it picks the ones that leave you the most ways to answer
+    let pool = nice.filter(w => w.length >= 3 && w.length <= 6 && commonRank.get(w) < 6000);
+    if (pool.length < 4) pool = nice.filter(w => w.length <= 7);
+    if (pool.length < 4) pool = nice;
+    pool = pool.slice(0, 200).sort((a, b) => tailScore(b, odds) - tailScore(a, odds));
+    return pool[Math.floor(Math.random() * Math.min(pool.length, 6))];
+  }
+  if (aiDifficulty === "medium") {
+    // Impure: a wide, steady range of everyday words, long and short, with no plan beyond not painting itself into a corner
+    let pool = nice.slice(0, 600).filter(w => w.length >= 4 && tailScore(w, odds) >= 3);
+    if (pool.length < 8) pool = nice.slice(0, 600);
+    const long = pool.filter(w => w.length >= 6);
+    if (long.length >= 5 && Math.random() < 0.55) pool = long;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   const solid = nice.filter(w => commonRank.get(w) < 15000);  // traps made of well known words
   return pickTrapWord(solid.length >= 8 ? solid : nice);
 }
@@ -1408,7 +1466,7 @@ function aiPlayTurn() {
 
   const selectedWord = pickAiWord();
   if (!selectedWord) {
-    playerWins(`The AI could not find a word starting with "${requiredPrefix.toUpperCase()}".`);
+    playerWins(`The gem could not find a word starting with "${requiredPrefix.toUpperCase()}".`);
     return;
   }
 
@@ -1578,7 +1636,7 @@ function appendChainBadge(word, player) {
   const mainPart = word.slice(0, word.length - activeTailLength);
   const tailPart = word.slice(-activeTailLength);
 
-  badge.innerHTML = `<small>${isPlayer ? 'you' : player === 'Start' ? 'start' : 'ai'}</small><span>${mainPart}<em>${tailPart}</em></span>`;
+  badge.innerHTML = `<small>${isPlayer ? 'you' : player === 'Start' ? 'start' : TIER_NAME[aiDifficulty]}</small><span>${mainPart}<em>${tailPart}</em></span>`;
 
   chainFeed.appendChild(badge);
   chainFeed.scrollTop = chainFeed.scrollHeight;
@@ -1733,7 +1791,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleModa
 /* ---------- ocean sound: generated live in the browser, nothing to download ---------- */
 function smoothstep(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
 const midiHz = (n) => 440 * Math.pow(2, (n - 69) / 12);
-const OCEAN_LAYERS = ['water', 'pads', 'chimes', 'drone', 'calls'];
+const OCEAN_LAYERS = ['water', 'pads', 'chimes', 'drone', 'calls', 'bubbles', 'metal', 'dread'];
 // pad chords (MIDI notes, four voices): sunlit = bright and open, twilight = softer and minor, deep = low stacked fifths
 const OCEAN_CHORDS = [
   [[50, 57, 61, 66], [47, 54, 57, 62], [43, 50, 59, 66], [45, 52, 59, 64]],
@@ -1773,7 +1831,7 @@ function createOcean(ctx, dest, seed) {
 
   /* each layer has its own level, plus how much of it goes into the reverb */
   const layer = {};
-  const send = { water: 0.08, pads: 0.5, chimes: 0.7, drone: 0.1, calls: 0.9 };
+  const send = { water: 0.08, pads: 0.5, chimes: 0.7, drone: 0.1, calls: 0.9, bubbles: 0.25, metal: 0.85, dread: 0.8 };
   OCEAN_LAYERS.forEach((n) => { const g = gain(1); g.connect(bus); const sg = gain(send[n]); g.connect(sg); sg.connect(verbIn); layer[n] = g; });
 
   /* water: a slow dark wash plus a little surface shimmer that fades with depth */
@@ -1848,6 +1906,8 @@ function createOcean(ctx, dest, seed) {
   dr1.connect(g1); dr2.connect(g2); dr3.connect(g3); g1.connect(droneLP); g2.connect(droneLP); g3.connect(droneLP);
   droneLP.connect(droneDyn); droneDyn.connect(layer.drone);
   const trem = osc('sine', 0.06), tremAmt = gain(0.05); trem.connect(tremAmt); tremAmt.connect(droneDyn.gain);
+  // a second hum a half step above the first, so the abyss beats and feels uneasy
+  const dr4 = osc('sine', 38.9), g4 = gain(0); dr4.connect(g4); g4.connect(droneLP);
 
   /* calls: far-off, whale-like swells that only start past the twilight */
   function playCall(t) {
@@ -1873,17 +1933,99 @@ function createOcean(ctx, dest, seed) {
     [o, o2, vib].forEach((n) => { n.start(t); n.stop(t + dur + 2.4); });
   }
 
+  /* bubbles: little bloops that rise past you, bigger and lower the deeper you are */
+  function playBubbles(t) {
+    if (rnd() > 0.4 + 0.6 * smoothstep(0.05, 0.5, depth)) return;
+    const n = 2 + Math.floor(rnd() * 6), base = 560 - depth * 330;
+    let tt = t;
+    for (let i = 0; i < n; i++) {
+      tt += 0.07 + rnd() * 0.24;
+      const f = base * (0.6 + rnd() * 0.9), o = ctx.createOscillator(), g = gain(0.0001), pan = ctx.createStereoPanner();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f, tt); o.frequency.exponentialRampToValueAtTime(f * 2.2, tt + 0.09);
+      g.gain.setValueAtTime(0.0001, tt);
+      g.gain.exponentialRampToValueAtTime(0.2 * (0.5 + rnd() * 0.5), tt + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.15);
+      pan.pan.value = rnd() * 1.4 - 0.7;
+      o.connect(g); g.connect(pan); pan.connect(layer.bubbles);
+      o.start(tt); o.stop(tt + 0.17);
+    }
+  }
+
+  /* metal: a huge structure groaning in the dark (stick and slip), now and then a far-off clang */
+  function playCreak(t) {
+    if (rnd() > smoothstep(0.55, 0.9, depth)) return;
+    const dur = 2.5 + rnd() * 3.5, f0 = 46 + rnd() * 40, pts = 60;
+    const o = ctx.createOscillator(), sq = ctx.createOscillator();
+    o.type = 'sawtooth'; sq.type = 'sine';
+    const c1 = new Float32Array(pts), c2 = new Float32Array(pts);
+    let step = 0, drift = (rnd() < 0.5 ? 1 : -1) * (0.08 + rnd() * 0.16);
+    for (let i = 0; i < pts; i++) {
+      if (i % 3 === 0) step = (rnd() - 0.5) * 0.22;
+      c1[i] = f0 * (1 + step + drift * (i / pts));
+      c2[i] = (700 + rnd() * 500) * (1 + step * 0.6);
+    }
+    o.frequency.setValueCurveAtTime(c1, t, dur); sq.frequency.setValueCurveAtTime(c2, t, dur);
+    const bp = filt('bandpass', 380 + rnd() * 200, 9), lp = filt('lowpass', 1800, 0.5);
+    bp.frequency.setValueAtTime(bp.frequency.value, t);
+    bp.frequency.linearRampToValueAtTime(650 + rnd() * 500, t + dur);
+    const g = gain(0.0001), sg = gain(0.04), pan = ctx.createStereoPanner();
+    pan.pan.value = rnd() * 1.6 - 0.8;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.32, t + dur * 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.2);
+    o.connect(bp); bp.connect(g); sq.connect(sg); sg.connect(g); g.connect(lp); lp.connect(pan); pan.connect(layer.metal);
+    [o, sq].forEach((n) => { n.start(t); n.stop(t + dur + 1.4); });
+  }
+  function playClang(t) {
+    if (rnd() > 0.8 * smoothstep(0.78, 0.95, depth)) return;
+    const f = 70 + rnd() * 50, pan = ctx.createStereoPanner(), lp = filt('lowpass', 1100, 0.5);
+    pan.pan.value = rnd() * 1.6 - 0.8;
+    [[1, 1, 5.5], [2.32, 0.6, 4], [3.87, 0.35, 3], [5.4, 0.18, 2]].forEach(([r, amt, ring]) => {
+      const o = ctx.createOscillator(), g = gain(0.0001);
+      o.type = 'sine'; o.frequency.value = f * r;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22 * amt, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + ring);
+      o.connect(g); g.connect(lp); o.start(t); o.stop(t + ring + 0.1);
+    });
+    lp.connect(pan); pan.connect(layer.metal);
+  }
+
+  /* dread: slow clusters of low notes a half step apart, swelling out of nowhere */
+  function playDread(t) {
+    if (rnd() > smoothstep(0.45, 0.85, depth)) return;
+    const dur = 7 + rnd() * 5, f = 52 + rnd() * 30;
+    const g = gain(0.0001), lp = filt('lowpass', 420, 0.5), pan = ctx.createStereoPanner();
+    pan.pan.value = rnd() * 1.2 - 0.6;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.2, t + dur * 0.55);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    [[1, 1], [1.0595, 0.8], [1.4142, 0.5], [2.1189, 0.25]].forEach(([r, amt]) => {
+      const o = ctx.createOscillator(), og = gain(amt);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f * r, t);
+      o.frequency.exponentialRampToValueAtTime(f * r * 0.93, t + dur);
+      o.connect(og); og.connect(g); o.start(t); o.stop(t + dur + 0.1);
+    });
+    g.connect(lp); lp.connect(pan); pan.connect(layer.dread);
+  }
+
+
   /* scheduler: queues events a few seconds ahead of the clock */
-  let nextChord = 0, nextChime = 0, nextCall = 0;
+  let nextChord = 0, nextChime = 0, nextCall = 0, nextBubble = 0, nextCreak = 0, nextDread = 0;
   function schedule(until) {
     while (nextChord < until) { changeChord(Math.max(nextChord, now())); nextChord += 16 + rnd() * 7; }
     while (nextChime < until) { playChime(nextChime); nextChime += (2.4 + rnd() * 3.6) * (1 + depth * 1.5); }
     while (nextCall < until) { playCall(nextCall); nextCall += 18 + rnd() * 20; }
+    while (nextBubble < until) { playBubbles(nextBubble); nextBubble += 3.5 + rnd() * 8; }
+    while (nextCreak < until) { playCreak(nextCreak); playClang(nextCreak + 4 + rnd() * 8); nextCreak += 13 + rnd() * 20; }
+    while (nextDread < until) { playDread(nextDread); nextDread += 22 + rnd() * 26; }
   }
 
   return {
     begin() {
-      const t = now(); nextChord = t; nextChime = t + 2; nextCall = t + 9 + rnd() * 9;
+      const t = now(); nextChord = t; nextChime = t + 2; nextCall = t + 9 + rnd() * 9; nextBubble = t + 3; nextCreak = t + 8 + rnd() * 8; nextDread = t + 12 + rnd() * 10;
       starters.forEach((n) => n.start(t));
     },
     schedule,
@@ -1899,13 +2041,14 @@ function createOcean(ctx, dest, seed) {
       ramp(padLP.frequency, 2600 * Math.pow(520 / 2600, k), tc);
       ramp(padDyn.gain, 1 - 0.3 * k, tc);
       ramp(droneDyn.gain, dg, tc); ramp(tremAmt.gain, dg * 0.25, tc);
+      ramp(g4.gain, 0.9 * smoothstep(0.8, 1, k), tc);
     }
   };
 }
 
 /* ---------- settings (kept in this browser) ---------- */
 const SETTINGS_KEY = 'wordchain-settings';
-const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80 }, follow: true, preview: 0 };
+const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, metal: 80, dread: 80 }, follow: true, preview: 0 };
 const clampNum = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
 function loadSettings() {
   const s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -1930,6 +2073,7 @@ const ZONES = [[0.2, 'sunlit'], [0.5, 'twilight'], [0.85, 'midnight'], [1.01, 'a
 const seaMid = document.getElementById('sea-mid');
 const seaDeep = document.getElementById('sea-deep');
 const lightEl = document.querySelector('.light');
+const seaStruct = document.getElementById('sea-structure');
 const depthReadout = document.getElementById('depth-readout');
 function currentDepth() {
   const s = settings.follow ? streak : settings.preview;
@@ -1940,6 +2084,7 @@ function updateDepth() {
   visualDepth = d;
   if (seaMid) seaMid.style.opacity = smoothstep(0.05, 0.5, d).toFixed(3);
   if (seaDeep) seaDeep.style.opacity = smoothstep(0.4, 0.95, d).toFixed(3);
+  if (seaStruct) seaStruct.style.opacity = (0.34 * smoothstep(0.78, 0.98, d)).toFixed(3);
   if (lightEl) lightEl.style.opacity = (1 - 0.95 * smoothstep(0.02, 0.55, d)).toFixed(3);
   if (depthReadout) {
     const zone = ZONES.find((z) => d < z[0])[1];
@@ -2125,7 +2270,7 @@ const Stats = (() => {
     endGame(won, reason, finalStreak, wordsThisGame) {
       data.games++;
       if (won) data.wins++;
-      const c = /gave up/i.test(reason) ? 'gaveUp' : /Time ran out/i.test(reason) ? 'timeout' : /guesses/i.test(reason) ? 'guesses' : /AI ran out/i.test(reason) ? 'aiTime' : 'aiStuck';
+      const c = /gave up/i.test(reason) ? 'gaveUp' : /Time ran out/i.test(reason) ? 'timeout' : /guesses/i.test(reason) ? 'guesses' : /gem ran out/i.test(reason) ? 'aiTime' : 'aiStuck';
       data.causes[c]++;
       if (won) data.totalScore += 500;
       data.streakSum += finalStreak;
@@ -2157,7 +2302,7 @@ function renderStats() {
   const deepM = Math.round(Math.min(1, records.streak.streak / DEEPEST_STREAK) * 4000);
   const maxLen = Math.max(1, ...LEN_BUCKETS.map((b) => d.lens[b]));
   const bars = LEN_BUCKETS.map((b) => `<div class="st-bar"><span>${b}</span><i style="--w:${(d.lens[b] / maxLen * 100).toFixed(1)}%"></i><em>${n(d.lens[b])}</em></div>`).join('');
-  const diffName = { easy: 'Easy', medium: 'Medium', master: 'Master' };
+  const diffName = { easy: 'Broken', medium: 'Impure', master: 'Perfect' };
   const groups = [
     group('Records', [
       row('best score', n(records.score.score), records.score.streak !== null && records.score.score ? `streak ${n(records.score.streak)}` : ''),
@@ -2186,8 +2331,8 @@ function renderStats() {
     ]),
     group('How matches ended', [
       row('you gave up', n(d.causes.gaveUp)), row('your time ran out', n(d.causes.timeout)),
-      row('out of guesses', n(d.causes.guesses)), row('the AI ran out of time', n(d.causes.aiTime)),
-      row('the AI had no word', n(d.causes.aiStuck))
+      row('out of guesses', n(d.causes.guesses)), row('the gem ran out of time', n(d.causes.aiTime)),
+      row('the gem had no word', n(d.causes.aiStuck))
     ]),
     group('Guesses', [
       row('words that were not in the dictionary', n(d.badGuesses)),
