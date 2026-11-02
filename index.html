@@ -164,6 +164,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   white-space: nowrap;
 }
 .mode-btn:hover { color: var(--foam); }
+.seg-note { align-self: center; padding: 0 12px 0 6px; font-size: 12px; color: var(--dim); }
 .mode-btn.is-active {
   color: #fff;
   background: rgba(63, 100, 200, .35);
@@ -636,7 +637,7 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 1.0</p>
+      <p>version 1.1</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -696,9 +697,13 @@ details.mix .mix-body { display: grid; gap: 4px; margin-top: 10px; }
       <section class="settings">
         <div class="seg" role="group" aria-label="Tail length rule">
           <button type="button" data-rule="weighted" class="mode-btn is-active">Escalating</button>
-          <button type="button" data-rule="1" class="mode-btn">1 letter</button>
-          <button type="button" data-rule="2" class="mode-btn">2 letters</button>
-          <button type="button" data-rule="3" class="mode-btn">3 letters</button>
+          <button type="button" data-rule="1" class="mode-btn" aria-label="1 letter">1</button>
+          <button type="button" data-rule="2" class="mode-btn" aria-label="2 letters">2</button>
+          <button type="button" data-rule="3" class="mode-btn" aria-label="3 letters">3</button>
+          <button type="button" data-rule="4" class="mode-btn" aria-label="4 letters">4</button>
+          <button type="button" data-rule="5" class="mode-btn" aria-label="5 letters">5</button>
+          <button type="button" data-rule="6" class="mode-btn" aria-label="6 letters">6</button>
+          <span class="seg-note" aria-hidden="true">letters</span>
         </div>
         <label class="opponent">
           <span>type of gem</span>
@@ -1017,6 +1022,29 @@ function usableWords(prefix) {
   return sortByComplexity(arr.slice(r[0], r[1]).filter(w => !usedWords.has(w)));
 }
 
+// a tail is only handed out when enough words can follow it, and a couple of them are everyday words
+const MIN_FOLLOWUPS = { 1: 1, 2: 8, 3: 8, 4: 5, 5: 4, 6: 3 };
+function tailOk(prefix) {
+  const need = MIN_FOLLOWUPS[prefix.length] || 1;
+  if (need <= 1) return hasUsable(prefix);
+  let total = 0, everyday = 0;
+  const visit = (w) => {
+    if (usedWords.has(w)) return false;
+    total++;
+    if (commonRank.has(w) && commonRank.get(w) < 20000) everyday++;
+    return total >= need && everyday >= 2;
+  };
+  if (prefix.length <= 3) {
+    const src = currentIndex().get(prefix);
+    if (!src) return false;
+    for (const w of src) if (visit(w)) return true;
+    return false;
+  }
+  const arr = sortedList(), r = prefixRange(arr, prefix);
+  for (let i = r[0]; i < r[1]; i++) if (visit(arr[i])) return true;
+  return false;
+}
+
 function hasUsable(prefix) {
   if (prefix.length <= 3) {
     const src = currentIndex().get(prefix);
@@ -1202,7 +1230,7 @@ function setOdds(list) {
 function updateProbabilityUI() {
   if (currentRule !== 'weighted') {
     const n = parseInt(currentRule);
-    if (probStageLabel) probStageLabel.textContent = `Fixed at ${n} letter${n === 1 ? '' : 's'}`;
+    if (probStageLabel) probStageLabel.textContent = `Fixed at ${n} letter${n === 1 ? '' : 's'}${n >= 4 ? ' (shorter when no word can follow)' : ''}`;
     setOdds([1, 2, 3, 4, 5, 6].map((k) => (k === n ? 100 : 0)));
     return;
   }
@@ -1227,7 +1255,7 @@ function calculateNextTailLength(lastWord) {
   targetLen = Math.min(targetLen, Math.max(1, lastWord.length - 1));
 
   while (targetLen > 1) {
-    if (hasUsable(lastWord.slice(-targetLen))) break;
+    if (tailOk(lastWord.slice(-targetLen))) break;
     targetLen--;
   }
 
@@ -1237,14 +1265,18 @@ function calculateNextTailLength(lastWord) {
 /* ---------- game flow ---------- */
 // a random everyday word opens each match, so nobody gets to choose where it starts
 const OPENER_SKIP = new Set(['abortion', 'rape', 'raped', 'suicide', 'murder', 'kill', 'killed', 'nazi', 'terror', 'terrorist', 'slave', 'slaves', 'sexual', 'incest', 'molest', 'genocide']);
+// in a fixed 4, 5 or 6 letter match, the gem and the opener aim for words that really end in a good tail of that length
+const fixedLong = () => { const n = parseInt(currentRule); return n >= 4 ? n : 0; };
 function pickOpener() {
-  const pool = [];
+  const pool = [], want = fixedLong();
   if (commonRank.size) {
     for (const [w, rank] of commonRank) {
-      if (rank < 8000 && w.length >= 4 && w.length <= 8 && !usedWords.has(w) && !OPENER_SKIP.has(w) && hasUsable(w.slice(-1))) pool.push(w);
+      if (rank < 8000 && w.length >= 4 && w.length <= 8 && !usedWords.has(w) && !OPENER_SKIP.has(w) && hasUsable(w.slice(-1)) && (!want || tailOk(w.slice(-want)))) pool.push(w);
     }
   }
-  const src = pool.length ? pool : builtInFallbackWords.filter((w) => w.length >= 4);
+  let src = pool.length ? pool : builtInFallbackWords.filter((w) => w.length >= 4);
+  if (want && !pool.length) src = [...commonRank.keys()].filter((w) => w.length > want && w.length <= 12 && commonRank.get(w) < 20000 && !OPENER_SKIP.has(w) && tailOk(w.slice(-want)));
+  if (!src.length) src = builtInFallbackWords.filter((w) => w.length >= 4);
   return src.length ? src[Math.floor(Math.random() * src.length)] : null;
 }
 
@@ -1503,19 +1535,29 @@ function pickAiWord() {
   let nice = everyday.length >= 5 ? everyday : all;
   const longer = nice.filter(w => w.length >= 3);          // skip two-letter oddities when there are choices
   if (longer.length >= 5) nice = longer;
+  if (aiDifficulty !== 'master' && fixedLong()) {
+    const n = fixedLong(), fit = nice.filter(w => w.length > n && tailOk(w.slice(-n)));
+    if (fit.length >= 3) nice = fit;
+  }
   const odds = tailOdds();
+  // Broken and Impure often skip plurals, so the chain does not turn into an endless run of S
+  const varied = (list) => {
+    if (Math.random() < 0.65) { const f = list.filter(w => !w.endsWith('s')); if (f.length >= 4) return f; }
+    return list;
+  };
   if (aiDifficulty === "easy") {
     // Broken: short, very common words, and it picks the ones that leave you the most ways to answer
     let pool = nice.filter(w => w.length >= 3 && w.length <= 6 && commonRank.get(w) < 6000);
     if (pool.length < 4) pool = nice.filter(w => w.length <= 7);
     if (pool.length < 4) pool = nice;
-    pool = pool.slice(0, 200).sort((a, b) => tailScore(b, odds) - tailScore(a, odds));
+    pool = varied(pool).slice(0, 200).sort((a, b) => tailScore(b, odds) - tailScore(a, odds));
     return pool[Math.floor(Math.random() * Math.min(pool.length, 6))];
   }
   if (aiDifficulty === "medium") {
     // Impure: a wide, steady range of everyday words, long and short, with no plan beyond not painting itself into a corner
     let pool = nice.slice(0, 600).filter(w => w.length >= 4 && tailScore(w, odds) >= 3);
     if (pool.length < 8) pool = nice.slice(0, 600);
+    pool = varied(pool);
     const long = pool.filter(w => w.length >= 6);
     if (long.length >= 5 && Math.random() < 0.55) pool = long;
     return pool[Math.floor(Math.random() * pool.length)];

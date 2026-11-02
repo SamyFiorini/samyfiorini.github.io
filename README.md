@@ -9,7 +9,8 @@ A deep-ocean themed word game. Each word has to start with the letters the last 
 - The matching letters are already typed for you. The word can be just those letters, like `me` after `so`**`me`**.
 - You have 20 seconds per turn. No word can be used twice in a match.
 - You get 5 tries per word, shown as five bubbles. Every word that is not in the dictionary pops one, and losing all five ends the match. Wrong starting letters, words already used and failed online lookups do not cost a bubble.
-- **Escalating** mode has six phases, one for every 50 of streak, from phase 0 (streak 0) to phase 5 (streak 250 and up). Each phase has its own chance of needing to match 1 to 6 letters, and the odds are shown next to the chain. You can also fix the match at 1, 2 or 3 letters.
+- **Escalating** mode has six phases, one for every 50 of streak, from phase 0 (streak 0) to phase 5 (streak 250 and up). Each phase has its own chance of needing to match 1 to 6 letters, and the odds are shown next to the chain. You can also fix the match at 1 to 6 letters. In a fixed match of 4 or more the gem aims for words that really end that way, but when no word can follow, the game falls back to a shorter match, and your own words decide the endings too, so 5 and 6 are rare.
+- A match is only handed out when enough words can follow it (several, with at least two everyday ones). That keeps endings like -NG, which only three obscure words start with, from showing up.
 
 ### Phases
 
@@ -56,7 +57,7 @@ The **stats** panel keeps records, totals, averages, word lengths, how your matc
 
 Your opponent is a lapis lazuli gem. Pick its quality next to the chain.
 
-- **Broken** plays short, very common words (3 to 6 letters) and picks the ones that leave you the most ways to answer. It also takes a little longer to reply.
+- **Broken** plays short, very common words (3 to 6 letters) and picks the ones that leave you the most ways to answer, often avoiding plurals. It also takes a little longer to reply.
 - **Impure** plays a wider and steadier range of everyday words, longer ones included, and avoids dead ends, but has no plan against you.
 - **Perfect** picks words that leave you the fewest ways to answer.
 
