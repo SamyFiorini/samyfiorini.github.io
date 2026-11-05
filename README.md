@@ -1,6 +1,6 @@
 # Word Chain
 
-A deep-ocean themed word game. Each word has to start with the letters the last word ended on. Play against an AI, keep your streak alive, and try to not run out of time.
+A deep-ocean word game. Each word has to start with the letters the last word ended on. Play against a gem, keep your streak alive, and try not to run out of time.
 
 ## How it works
 
@@ -42,24 +42,32 @@ A long match is only used when some unused word can follow it. Otherwise the gam
 
 ### Stats
 
-The **stats** panel keeps records, totals, averages, word lengths, how your matches ended, streak milestones and results per opponent. It sits next to settings and has a button to erase everything saved in the browser (records, stats and settings). It asks you to press twice.
+The **stats** panel keeps records, totals, averages, word lengths, how your matches ended, streak milestones and results per type of gem. It sits next to settings and has a button to erase everything saved in the browser (records, stats and settings). It asks you to press twice.
+
+### Results screen
+
+When a match ends, a results screen shows your score, streak, words, letters, longest and highest scoring word, answer times, wrong guesses, the gem, the depth and phase you reached, and badges for anything that beat your records. Your best words are clickable and open their definition. It can be switched off in settings. The first time you press Start, a short hint explains the basics.
+
+### Looking up words
+
+The **define** link in the header opens a word lookup (search box and a Random button). Definitions come from the Wiktionary REST API, with dictionaryapi.dev as a backup, and need an internet connection. It shows whether the word is valid in the game. Lookups are locked while a match is running, and the words in the results screen and the "would have worked" list open here once the match is over.
 
 ### Fair play
 
 - Words have to be typed one letter at a time. Pasting, dropping text into the box, swipe typing and tapping a suggested word are blocked.
-- The opponent, tail length, common words only and Start are locked while a match is running.
+- The type of gem, tail length, common words only and Start are locked while a match is running.
 - Words can only use the letters A to Z, so phrases and hyphenated words are not accepted.
 - The turn clock follows the real time, so it cannot be stalled by freezing the page or by spamming online lookups.
 - Official records should come with a video of the match, since nothing in the browser can prove a score.
 - Records and stats live in your own browser and can be edited by anyone with developer tools. A game with no server cannot prevent that, so scores are for you, not for a public leaderboard.
 
-### Opponents
+### Gems
 
-Your opponent is a lapis lazuli gem. Pick the type of gem with the Broken, Impure and Perfect buttons next to the chain. They are locked while a match is running.
+You play against a lapis lazuli gem. Pick the type of gem with the Broken, Impure and Perfect buttons next to the chain. They are locked while a match is running.
 
 - **Broken** only knows the everyday words in `common.txt`. It plays short, very common words, picks the ones that leave you the most ways to answer, and often avoids plurals. When it has no everyday word left for the letters you gave it, it loses.
 - **Impure** plays everyday words first. When none are left, it finds a word in the full `words.txt` list 9 times in 10, and loses the other 1 time in 10. It plays a wide range of words and avoids dead ends, but has no plan against you.
-- **Perfect** knows every word and picks the ones that leave you the fewest ways to answer. You are not meant to beat it.
+- **Perfect** knows every word and searches the whole list. For each word it works out how many answers you would really have, counting well known words as more than obscure ones and following the tail rules the game will use, then plays one of the best few. It also checks that it will not trap itself. You are not meant to beat it. It cannot look words up on Wiktionary the way you can.
 
 ### Other options
 
@@ -69,9 +77,11 @@ Your opponent is a lapis lazuli gem. Pick the type of gem with the Broken, Impur
 
 | File | What it is |
 | --- | --- |
-| `index.html` | The whole game: page, styles and script. |
+| `index.html` | The page. |
+| `style.css` | All the styles. |
+| `script.js` | The game: dictionary, rules, gems, sound, stats, results and lookup. |
 | `words.txt` | Accepted words (172,823). |
-| `common.txt` | Everyday words (32,542) ranked by frequency, used by the AI and "common words only". |
+| `common.txt` | Everyday words (32,542) ranked by frequency, used by the gems and "common words only". |
 
 Words that are not in `words.txt` (names, places, newer words) are checked against English Wiktionary. The clock waits during that lookup, up to 6 seconds per turn.
 
