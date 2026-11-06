@@ -463,7 +463,6 @@ function startGame() {
   matchBad = 0;
   { const sd = Stats.get(); matchStart = { rec: JSON.parse(JSON.stringify(records)), longest: sd.longest.len, best: sd.bestWord.points, fastest: sd.fastest, at: Date.now(), gem: typeOfGem }; }
   Stats.startGame();
-  showFirstHint();
 
   updateScoreboard();
   if (chainFeed) chainFeed.innerHTML = '';
@@ -1151,18 +1150,34 @@ if (btnGiveUp) {
     }
   });
 }
-if (btnStart) btnStart.addEventListener('click', startGame);
+// the very first time Start is pressed, the rules pop-up opens first and "Got it, start" begins the match
+const RULES_SEEN_KEY = 'wordchain-hint-seen';
+let startAfterRules = false;
+function rulesSeen() { try { return localStorage.getItem(RULES_SEEN_KEY) === '1'; } catch (e) { return true; } }
+if (btnStart) btnStart.addEventListener('click', () => {
+  if (!rulesSeen() && modalInstructions) { startAfterRules = true; if (btnModalOk) btnModalOk.textContent = 'Got it, start'; toggleModal(true); return; }
+  startGame();
+});
 
 function toggleModal(show) {
   if (modalInstructions) modalInstructions.classList.toggle('hidden', !show);
+  if (!show) {
+    if (btnModalOk) btnModalOk.textContent = 'Got it';
+    if (startAfterRules) { try { localStorage.setItem(RULES_SEEN_KEY, '1'); } catch (e) { /* ignore */ } }
+  }
 }
 if (btnHowToPlay) btnHowToPlay.addEventListener('click', () => toggleModal(true));
-if (btnCloseModal) btnCloseModal.addEventListener('click', () => toggleModal(false));
-if (btnModalOk) btnModalOk.addEventListener('click', () => toggleModal(false));
+if (btnCloseModal) btnCloseModal.addEventListener('click', () => { toggleModal(false); startAfterRules = false; });
+if (btnModalOk) btnModalOk.addEventListener('click', () => {
+  const go = startAfterRules;
+  toggleModal(false);
+  startAfterRules = false;
+  if (go) startGame();
+});
 if (modalInstructions) {
-  modalInstructions.addEventListener('click', (e) => { if (e.target === modalInstructions) toggleModal(false); });
+  modalInstructions.addEventListener('click', (e) => { if (e.target === modalInstructions) { toggleModal(false); startAfterRules = false; } });
 }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleModal(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { toggleModal(false); startAfterRules = false; } });
 
 /* ---------- ocean sound: generated live in the browser, nothing to download ---------- */
 function smoothstep(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
@@ -1426,7 +1441,7 @@ function createOcean(ctx, dest, seed) {
 // put your Ko-fi page here, for example 'https://ko-fi.com/yourname'. While it is empty the support box stays hidden.
 const KOFI_URL = 'https://ko-fi.com/samyfiorini';
 const SETTINGS_KEY = 'wordchain-settings';
-const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, metal: 80, dread: 80 }, follow: true, preview: 0, results: true };
+const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, metal: 80, dread: 80 }, follow: true, preview: 0, results: true, minStreak: 0, minScore: 0 };
 const clampNum = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
 function loadSettings() {
   const s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -1436,6 +1451,8 @@ function loadSettings() {
       if (typeof raw.music === 'boolean') s.music = raw.music;
       if (typeof raw.follow === 'boolean') s.follow = raw.follow;
       if (typeof raw.results === 'boolean') s.results = raw.results;
+      if (Number.isFinite(raw.minStreak) && raw.minStreak >= 0) s.minStreak = Math.min(9999, Math.floor(raw.minStreak));
+      if (Number.isFinite(raw.minScore) && raw.minScore >= 0) s.minScore = Math.min(9999999, Math.floor(raw.minScore));
       if (records.streak.streak < 250) s.follow = true;
       s.volume = clampNum(raw.volume, 0, 100, s.volume);
       s.preview = clampNum(raw.preview, 0, 250, s.preview);
@@ -1529,6 +1546,8 @@ const setMusic = document.getElementById('set-music');
 const setVolume = document.getElementById('set-volume');
 const setFollow = document.getElementById('set-follow');
 const setResults = document.getElementById('set-results');
+const setMinStreak = document.getElementById('set-min-streak');
+const setMinScore = document.getElementById('set-min-score');
 const setPreview = document.getElementById('set-preview');
 const soundNote = document.getElementById('sound-note');
 const depthHint = document.getElementById('depth-hint');
@@ -1554,6 +1573,8 @@ function syncSettingsUI() {
   if (!setMusic) return;
   setMusic.checked = settings.music;
   setResults.checked = settings.results;
+  setMinStreak.value = settings.minStreak;
+  setMinScore.value = settings.minScore;
   setVolume.value = settings.volume; paintRange(setVolume);
   OCEAN_LAYERS.forEach((n) => { const r = document.getElementById('set-' + n); r.value = settings.layers[n]; paintRange(r); });
   syncDepthUI();
@@ -1588,6 +1609,9 @@ if (setMusic) {
     r.addEventListener('input', () => { settings.layers[n] = +r.value; paintRange(r); saveSettings(); Ocean.setLayer(n); });
   });
   setResults.addEventListener('change', () => { settings.results = setResults.checked; saveSettings(); });
+  const readNum = (el, max) => { const v = Math.floor(Number(el.value)); return Number.isFinite(v) && v > 0 ? Math.min(max, v) : 0; };
+  setMinStreak.addEventListener('change', () => { settings.minStreak = readNum(setMinStreak, 9999); setMinStreak.value = settings.minStreak; saveSettings(); });
+  setMinScore.addEventListener('change', () => { settings.minScore = readNum(setMinScore, 9999999); setMinScore.value = settings.minScore; saveSettings(); });
   setFollow.addEventListener('change', () => {
     if (!depthUnlocked()) { syncDepthUI(); return; }
     settings.follow = setFollow.checked;
@@ -1759,7 +1783,7 @@ const btnErase = document.getElementById('btn-erase');
 let eraseArmed = false, eraseTimer = null;
 function disarmErase() { eraseArmed = false; clearTimeout(eraseTimer); if (btnErase) btnErase.textContent = 'Erase all saved data'; }
 function eraseAll() {
-  ['wordchain-records', 'wordchain-best', STATS_KEY, SETTINGS_KEY, HINT_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
+  ['wordchain-records', 'wordchain-best', STATS_KEY, SETTINGS_KEY, RULES_SEEN_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
   records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
   Stats.reset();
   Ocean.stop();
@@ -1786,17 +1810,6 @@ if (modalStats) {
       if (note) note.textContent = 'All saved data was erased.';
     }
   });
-}
-
-/* ---------- first-time hint ---------- */
-const HINT_KEY = 'wordchain-hint-seen';
-const firstHint = document.getElementById('first-hint');
-function showFirstHint() {
-  if (!firstHint) return;
-  let seen = false;
-  try { seen = localStorage.getItem(HINT_KEY) === '1'; } catch (e) { /* show it */ }
-  firstHint.classList.toggle('hidden', seen);
-  if (!seen) { try { localStorage.setItem(HINT_KEY, '1'); } catch (e) { /* ignore */ } }
 }
 
 /* ---------- results screen ---------- */
@@ -1864,6 +1877,9 @@ const Results = (() => {
   return {
     later(won, reason, endStreak) {
       if (!settings.results || (!won && matchLog.length === 0)) return;
+      // with a minimum set, only matches that reach the streak or the score get a results screen
+      const anyMin = settings.minStreak > 0 || settings.minScore > 0;
+      if (anyMin && !((settings.minStreak > 0 && endStreak >= settings.minStreak) || (settings.minScore > 0 && score >= settings.minScore))) return;
       clearTimeout(timer);
       timer = setTimeout(() => { if (!isGameActive) render(won, reason, endStreak); }, 900);
     },
@@ -1914,14 +1930,17 @@ const Define = (() => {
   // returns { found: true, groups, source } | { found: false } | { error: true }
   async function fetchDefinition(word) {
     let reached = false;
-    try {
-      const r = await fetch(REST + encodeURIComponent(word), { headers: { Accept: 'application/json' } });
-      if (r.ok) { const g = fromWiktionary(await r.json()); reached = true; if (g.length) return { found: true, groups: g, source: 'Wiktionary' }; }
-      else if (r.status === 404) reached = true;
-    } catch (e) { /* try the other one */ }
+    // Wiktionary is case sensitive: "spain" is not an entry but "Spain" is, so names are tried with a capital too
+    for (const name of [word, word[0].toUpperCase() + word.slice(1)]) {
+      try {
+        const r = await fetch(REST + encodeURIComponent(name), { headers: { Accept: 'application/json' } });
+        if (r.ok) { const g = fromWiktionary(await r.json()); reached = true; if (g.length) return { found: true, groups: g, source: 'Wiktionary', name }; }
+        else if (r.status === 404) reached = true;
+      } catch (e) { /* try the next one */ }
+    }
     try {
       const r = await fetch(BACKUP + encodeURIComponent(word));
-      if (r.ok) { const g = fromBackup(await r.json()); reached = true; if (g.length) return { found: true, groups: g, source: 'dictionaryapi.dev' }; }
+      if (r.ok) { const g = fromBackup(await r.json()); reached = true; if (g.length) return { found: true, groups: g, source: 'dictionaryapi.dev', name: word }; }
       else if (r.status === 404) reached = true;
     } catch (e) { /* offline */ }
     return reached ? { found: false } : { error: true };
@@ -1931,7 +1950,7 @@ const Define = (() => {
   function show(word, res) {
     const inGame = dictionarySet.has(word) && (!strictMode || strictSet.has(word));
     const head = el('div', 'def-word');
-    head.append(el('span', '', word), el('span', 'def-tag' + (inGame ? ' yes' : ''), inGame ? 'valid in the game' : 'not in the game list'));
+    head.append(el('span', '', res.name || word), el('span', 'def-tag' + (inGame ? ' yes' : ''), inGame ? 'valid in the game' : res.found ? 'accepted through online lookup' : 'not in the game list'));
     out.replaceChildren(head);
     if (!res.found) { out.append(el('p', 'hint', 'No definition was found for this word. Check the spelling, or try the base form (for example "walk" instead of "walked").')); return; }
     res.groups.forEach((g) => {
@@ -1943,7 +1962,7 @@ const Define = (() => {
     const src = el('p', 'def-src', 'From ' + res.source);
     if (res.source === 'Wiktionary') {
       const a = el('a', '', 'open the full entry');
-      a.href = 'https://en.wiktionary.org/wiki/' + encodeURIComponent(word); a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.href = 'https://en.wiktionary.org/wiki/' + encodeURIComponent(res.name || word); a.target = '_blank'; a.rel = 'noopener noreferrer';
       src.append(' · ', a);
     }
     out.append(src);

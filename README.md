@@ -1,6 +1,6 @@
 # Word Chain
 
-A deep-ocean word game. Each word has to start with the letters the last word ended on. Play against a gem, keep your streak alive, and try not to run out of time.
+A deep-ocean themed word game. Each word has to start with the letters the last word ended on. Play against a gem, keep your streak alive, and try not to run out of time.
 
 ## How it works
 
@@ -46,7 +46,7 @@ The **stats** panel keeps records, totals, averages, word lengths, how your matc
 
 ### Results screen
 
-When a match ends, a results screen shows your score, streak, words, letters, longest and highest scoring word, answer times, wrong guesses, the gem, the depth and phase you reached, and badges for anything that beat your records. Your best words are clickable and open their definition. It can be switched off in settings. The first time you press Start, a short hint explains the basics.
+When a match ends, a results screen shows your score, streak, words, letters, longest and highest scoring word, answer times, wrong guesses, the gem, the depth and phase you reached, and badges for anything that beat your records. Your best words are clickable and open their definition. In settings you can switch it off, or only show it when the streak or the score reaches a number you choose. The first time you press Start, the rules pop-up opens first, and "Got it, start" begins the match.
 
 ### Looking up words
 

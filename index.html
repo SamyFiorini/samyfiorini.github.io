@@ -23,7 +23,7 @@
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 1.4</p>
+      <p>version 1.5</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -70,7 +70,6 @@
       </section>
 
       <p id="status-message" class="status quiet" role="status" aria-live="polite"></p>
-      <p id="first-hint" class="first-hint hidden">First time? The last letters of each word become the first letters of yours. You get 20 seconds a turn and 5 guesses.</p>
 
       <form id="word-form" class="entry" autocomplete="off">
         <input type="text" id="player-input" disabled autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word" aria-label="Your word">
@@ -295,8 +294,15 @@
       <label class="toggle">
         <input type="checkbox" id="set-results">
         <span class="switch" aria-hidden="true"></span>
-        <span>show a results screen after each match</span>
+        <span>show a results screen after matches</span>
       </label>
+      <div class="res-min">
+        <span>only when the streak is at least</span>
+        <input type="number" id="set-min-streak" min="0" max="9999" step="1" inputmode="numeric" aria-label="Minimum streak">
+        <span>or the score is at least</span>
+        <input type="number" id="set-min-score" min="0" max="9999999" step="100" inputmode="numeric" aria-label="Minimum score">
+      </div>
+      <p class="hint">Leave both at 0 to see it after every match.</p>
     </section>
 
     <section class="set-group">
