@@ -130,8 +130,6 @@ const btnCloseModal = document.getElementById('btn-close-modal');
 const btnModalOk = document.getElementById('btn-modal-ok');
 
 /* ---------- words ---------- */
-const topCommonWords = ["the","be","to","of","and","a","in","that","have","i","it","for","not","on","with","he","as","you","do","at","this","but","his","by","from","they","we","say","her","she","or","an","will","my","one","all","would","there","their","what","so","up","out","if","about","who","get","which","go","me","when","make","can","like","time","no","just","him","know","take","people","into","year","your","good","some","could","them","see","other","than","then","now","look","only","come","its","over","think","also","back","after","use","two","how","our","work","first","well","way","even","new","want","because","any","these","give","day","most","us","ear","elf","elephant","orange","apple","dragon","onion","online","ring","river","water","yellow","ghost","tree","engine","game","king","time","yard","earth","hero","wave","element","tiger","rabbit","train","nest","turtle","eagle","monster","terrain"];
-
 function getWordComplexity(word) {
   let s = word.length * 10;
   const r = commonRank.get(word);
@@ -488,29 +486,6 @@ function startGame() {
   showStatus(opener ? `The chain opens with "${opener.toUpperCase()}". Your turn.` : "Type any word to open the chain.", "info");
 }
 
-function resetGame() {
-  disarmGiveUp();
-  clearInterval(turnTimer);
-  isGameActive = false;
-  syncStrictLock();
-  requiredPrefix = "";
-  if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
-  if (btnSubmit) btnSubmit.disabled = true;
-  if (btnGiveUp) btnGiveUp.disabled = true;
-  if (chainFeed) chainFeed.innerHTML = EMPTY_HTML;
-  if (chainLengthBadge) chainLengthBadge.textContent = '0 words';
-  if (gameOverSuggestions) gameOverSuggestions.classList.add('hidden');
-  if (statusMessage) statusMessage.classList.add('quiet');
-  usedWords.clear();
-  updateTargetDisplay();
-  timeLeft = TURN_SECONDS;
-  if (timerBar) timerBar.classList.add('snap');
-  updateTimerDisplay();
-  if (timerBar) { void timerBar.offsetWidth; timerBar.classList.remove('snap'); }
-  updateProbabilityUI();
-  resetGuesses();
-}
-
 let lookupBudgetMs = 0;   // how much online-lookup time may be paused this turn
 
 let turnDeadline = 0;     // when this turn ends, by the real clock
@@ -853,12 +828,14 @@ async function existsOnline(word) {
 // best score remembers the streak it came with, best streak remembers its score
 let records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
 try {
+  // saved records are read carefully: anything that is not a plain number is ignored
   const saved = JSON.parse(localStorage.getItem('wordchain-records') || 'null');
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null);
   if (saved && saved.score && saved.streak) {
-    records = saved;
-  } else {
-    const old = parseInt(localStorage.getItem('wordchain-best') || '0', 10) || 0;   // the older single best score
-    if (old) records.score = { score: old, streak: null };
+    records = {
+      score: { score: num(saved.score.score) || 0, streak: num(saved.score.streak) },
+      streak: { streak: num(saved.streak.streak) || 0, score: num(saved.streak.score) }
+    };
   }
 } catch (e) {}
 
@@ -1783,7 +1760,7 @@ const btnErase = document.getElementById('btn-erase');
 let eraseArmed = false, eraseTimer = null;
 function disarmErase() { eraseArmed = false; clearTimeout(eraseTimer); if (btnErase) btnErase.textContent = 'Erase all saved data'; }
 function eraseAll() {
-  ['wordchain-records', 'wordchain-best', STATS_KEY, SETTINGS_KEY, RULES_SEEN_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
+  ['wordchain-records', STATS_KEY, SETTINGS_KEY, RULES_SEEN_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
   records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
   Stats.reset();
   Ocean.stop();
