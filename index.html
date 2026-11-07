@@ -23,7 +23,7 @@
   <header class="top">
     <div class="brand">
       <h1>Word Chain</h1>
-      <p>version 1.51</p>
+      <p>version 1.6a</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -72,7 +72,10 @@
       <p id="status-message" class="status quiet" role="status" aria-live="polite"></p>
 
       <form id="word-form" class="entry" autocomplete="off">
-        <input type="text" id="player-input" disabled autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word" aria-label="Your word">
+        <div class="field">
+          <input type="text" id="player-input" name="word" disabled autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word" aria-label="Your word" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+          <div id="input-mirror" class="mirror" aria-hidden="true"></div>
+        </div>
         <button type="submit" id="btn-submit" disabled aria-label="Submit word">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
@@ -290,7 +293,7 @@
     </section>
 
     <section class="set-group">
-      <h4>Matches</h4>
+      <h4>Play</h4>
       <label class="toggle">
         <input type="checkbox" id="set-results">
         <span class="switch" aria-hidden="true"></span>
@@ -301,8 +304,14 @@
         <input type="number" id="set-min-streak" min="0" max="9999" step="1" inputmode="numeric" aria-label="Minimum streak">
         <span>or the score is at least</span>
         <input type="number" id="set-min-score" min="0" max="9999999" step="100" inputmode="numeric" aria-label="Minimum score">
+        <span class="hint">(0 for every match)</span>
       </div>
-      <p class="hint">Leave both at 0 to see it after every match.</p>
+      <label class="toggle">
+        <input type="checkbox" id="set-mask">
+        <span class="switch" aria-hidden="true"></span>
+        <span>hide keyboard suggestions</span>
+      </label>
+      <p class="hint">Stops phone keyboards from suggesting words. On by default on touch screens. Turn it off if password pop-ups appear.</p>
     </section>
 
     <section class="set-group">

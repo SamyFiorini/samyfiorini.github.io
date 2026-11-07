@@ -489,6 +489,8 @@ function startGame() {
 let lookupBudgetMs = 0;   // how much online-lookup time may be paused this turn
 
 let turnDeadline = 0;     // when this turn ends, by the real clock
+// seconds the player has really used on this turn (time spent waiting for an online lookup is not counted)
+const answerSeconds = () => Math.max(0, (TURN_SECONDS * 1000 - (turnDeadline - Date.now())) / 1000);
 
 function tickTimer() {
   const left = Math.max(0, Math.ceil((turnDeadline - Date.now()) / 1000));
@@ -618,8 +620,8 @@ function playWord(word, player) {
   if (player === "Player") {
     const r = scoreWord(word, requiredPrefix ? requiredPrefix.length : 1, streak);
     matchWords++;
-    matchLog.push({ word, points: r.total, secs: Math.max(0, TURN_SECONDS - timeLeft), tail: requiredPrefix ? requiredPrefix.length : 1 });
-    Stats.word(word, r.total, requiredPrefix ? requiredPrefix.length : 1, Math.max(0, TURN_SECONDS - timeLeft));
+    matchLog.push({ word, points: r.total, secs: answerSeconds(), tail: requiredPrefix ? requiredPrefix.length : 1 });
+    Stats.word(word, r.total, requiredPrefix ? requiredPrefix.length : 1, answerSeconds());
     score += r.total;
     streak++;
     showBreakdown(r);
@@ -1418,7 +1420,7 @@ function createOcean(ctx, dest, seed) {
 // put your Ko-fi page here, for example 'https://ko-fi.com/yourname'. While it is empty the support box stays hidden.
 const KOFI_URL = 'https://ko-fi.com/samyfiorini';
 const SETTINGS_KEY = 'wordchain-settings';
-const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, metal: 80, dread: 80 }, follow: true, preview: 0, results: true, minStreak: 0, minScore: 0 };
+const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, metal: 80, dread: 80 }, follow: true, preview: 0, results: true, minStreak: 0, minScore: 0, maskInput: null };
 const clampNum = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
 function loadSettings() {
   const s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -1428,6 +1430,7 @@ function loadSettings() {
       if (typeof raw.music === 'boolean') s.music = raw.music;
       if (typeof raw.follow === 'boolean') s.follow = raw.follow;
       if (typeof raw.results === 'boolean') s.results = raw.results;
+      if (typeof raw.maskInput === 'boolean') s.maskInput = raw.maskInput;
       if (Number.isFinite(raw.minStreak) && raw.minStreak >= 0) s.minStreak = Math.min(9999, Math.floor(raw.minStreak));
       if (Number.isFinite(raw.minScore) && raw.minScore >= 0) s.minScore = Math.min(9999999, Math.floor(raw.minScore));
       if (records.streak.streak < 250) s.follow = true;
@@ -1523,6 +1526,7 @@ const setMusic = document.getElementById('set-music');
 const setVolume = document.getElementById('set-volume');
 const setFollow = document.getElementById('set-follow');
 const setResults = document.getElementById('set-results');
+const setMask = document.getElementById('set-mask');
 const setMinStreak = document.getElementById('set-min-streak');
 const setMinScore = document.getElementById('set-min-score');
 const setPreview = document.getElementById('set-preview');
@@ -1550,6 +1554,7 @@ function syncSettingsUI() {
   if (!setMusic) return;
   setMusic.checked = settings.music;
   setResults.checked = settings.results;
+  setMask.checked = maskOn();
   setMinStreak.value = settings.minStreak;
   setMinScore.value = settings.minScore;
   setVolume.value = settings.volume; paintRange(setVolume);
@@ -1585,6 +1590,7 @@ if (setMusic) {
     const r = document.getElementById('set-' + n);
     r.addEventListener('input', () => { settings.layers[n] = +r.value; paintRange(r); saveSettings(); Ocean.setLayer(n); });
   });
+  setMask.addEventListener('change', () => { settings.maskInput = setMask.checked; saveSettings(); applyMask(); });
   setResults.addEventListener('change', () => { settings.results = setResults.checked; saveSettings(); });
   const readNum = (el, max) => { const v = Math.floor(Number(el.value)); return Number.isFinite(v) && v > 0 ? Math.min(max, v) : 0; };
   setMinStreak.addEventListener('change', () => { settings.minStreak = readNum(setMinStreak, 9999); setMinStreak.value = settings.minStreak; saveSettings(); });
@@ -1671,6 +1677,7 @@ const Stats = (() => {
       if (word.length > data.longest.len) data.longest = { word, len: word.length };
       if (points > data.bestWord.points) data.bestWord = { word, points };
       data.totalScore += points;
+      secs = Math.round(secs * 100) / 100;
       data.answerSecs += secs; data.answers++;
       if (data.fastest === null || secs < data.fastest) data.fastest = secs;
       save();
@@ -1984,6 +1991,47 @@ const Define = (() => {
     const t = e.target.closest && e.target.closest('[data-define]');
     if (t) Define.open(t.dataset.define);
   });
+})();
+
+/* ---------- hiding the keyboard's word suggestions ---------- */
+// Phone keyboards ignore autocomplete="off", but they do not suggest words in a password field. So the real
+// input can be a password field with invisible text, and the letters are drawn on top of it.
+const inputField = playerInput ? playerInput.closest('.field') : null;
+const inputMirror = document.getElementById('input-mirror');
+function touchScreen() { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); }
+function maskOn() { return typeof settings.maskInput === 'boolean' ? settings.maskInput : touchScreen(); }
+function drawMirror() {
+  if (!inputMirror || !playerInput) return;
+  inputMirror.replaceChildren();
+  const v = playerInput.value;
+  if (!v) return;
+  inputMirror.append(document.createTextNode(v));
+  const caret = document.createElement('i');
+  caret.className = 'caret';
+  inputMirror.append(caret);
+}
+function applyMask() {
+  if (!playerInput || !inputField) return;
+  const on = maskOn();
+  playerInput.type = on ? 'password' : 'text';
+  inputField.classList.toggle('masked', on);
+  drawMirror();
+}
+(function wireMask() {
+  if (!playerInput || !inputField) return;
+  // draw again whenever the value changes, including when the game sets it
+  const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  Object.defineProperty(playerInput, 'value', {
+    configurable: true,
+    get() { return desc.get.call(this); },
+    set(v) { desc.set.call(this, v); drawMirror(); }
+  });
+  playerInput.addEventListener('input', drawMirror);
+  // the letters are drawn with the caret at the end, so keep the real caret there too
+  const toEnd = () => { if (!inputField.classList.contains('masked')) return; const n = playerInput.value.length; try { playerInput.setSelectionRange(n, n); } catch (e) { /* ignore */ } };
+  ['focus', 'click', 'select', 'keyup'].forEach((t) => playerInput.addEventListener(t, () => setTimeout(toEnd, 0)));
+  inputField.addEventListener('click', () => { if (!playerInput.disabled) playerInput.focus(); });
+  applyMask();
 })();
 
 /* ---------- go ---------- */

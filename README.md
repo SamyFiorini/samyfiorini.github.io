@@ -55,6 +55,7 @@ The **define** link in the header opens a word lookup (search box and a Random b
 ### Fair play
 
 - Words have to be typed one letter at a time. Pasting, dropping text into the box, swipe typing and tapping a suggested word are blocked.
+- On touch screens the typing box is treated like a password field so phone keyboards do not suggest words, and the game draws the letters itself. It is on by default on phones, can be switched in settings ("hide keyboard suggestions"), and is worth turning off if your browser shows password pop-ups.
 - The type of gem, tail length, common words only and Start are locked while a match is running.
 - Words can only use the letters A to Z, so phrases and hyphenated words are not accepted.
 - The turn clock follows the real time, so it cannot be stalled by freezing the page or by spamming online lookups.
