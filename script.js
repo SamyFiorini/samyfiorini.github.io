@@ -80,7 +80,7 @@ let strictSet = new Set();
 let strictAvailable = false;
 let dictionaryReady = false;
 let strictMode = false;
-let usedWords = new Set();
+const usedWords = new Set();
 let currentRule = "weighted";
 let activeTailLength = 1;
 let requiredPrefix = "";
@@ -91,7 +91,6 @@ let isPlayerTurn = true;
 let score = 0;
 let streak = 0;
 let isGameActive = false;
-let matchWords = 0;   // words the player has played this match
 let matchLog = [];    // each word the player played this match: { word, points, secs, tail }
 let matchBad = 0;     // wrong guesses this match
 let matchStart = null; // what the records looked like when the match began, so we can tell what is new
@@ -455,7 +454,6 @@ function startGame() {
   isGameActive = true;
   isPlayerTurn = true;
   syncStrictLock();
-  matchWords = 0;
   matchLog = [];
   matchBad = 0;
   { const sd = Stats.get(); matchStart = { rec: JSON.parse(JSON.stringify(records)), longest: sd.longest.len, best: sd.bestWord.points, fastest: sd.fastest, at: Date.now(), gem: typeOfGem }; }
@@ -614,7 +612,6 @@ function playWord(word, player) {
   // score against the tail the word had to match, before the next one is chosen
   if (player === "Player") {
     const r = scoreWord(word, requiredPrefix ? requiredPrefix.length : 1, streak);
-    matchWords++;
     matchLog.push({ word, points: r.total, secs: answerSeconds(), tail: requiredPrefix ? requiredPrefix.length : 1 });
     Stats.word(word, r.total, requiredPrefix ? requiredPrefix.length : 1, answerSeconds());
     score += r.total;
@@ -1160,7 +1157,7 @@ const OCEAN_CHORDS = [
 ];
 
 function createOcean(ctx, dest, seed) {
-  let s = (seed == null ? Math.floor(Math.random() * 4294967296) : seed) >>> 0;
+  let s = (seed === undefined || seed === null ? Math.floor(Math.random() * 4294967296) : seed) >>> 0;
   const rnd = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const now = () => ctx.currentTime;
   const ramp = (param, v, tc) => { if (tc > 0) param.setTargetAtTime(v, now(), tc); else param.setValueAtTime(v, now()); };
@@ -1168,7 +1165,7 @@ function createOcean(ctx, dest, seed) {
   const starters = [];
   const osc = (type, freq) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; starters.push(o); return o; };
   const gain = (v) => { const g = ctx.createGain(); g.gain.value = v; return g; };
-  const filt = (type, f, q) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q == null ? 0.7 : q; return b; };
+  const filt = (type, f, q) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q === undefined ? 0.7 : q; return b; };
 
   /* output: layers -> bus -> tone -> compressor -> master -> speakers */
   const master = gain(0);
@@ -1319,10 +1316,11 @@ function createOcean(ctx, dest, seed) {
     const o = ctx.createOscillator(), sq = ctx.createOscillator();
     o.type = 'sawtooth'; sq.type = 'sine';
     const c1 = new Float32Array(pts), c2 = new Float32Array(pts);
-    let step = 0, drift = (rnd() < 0.5 ? 1 : -1) * (0.08 + rnd() * 0.16);
+    const slide = (rnd() < 0.5 ? 1 : -1) * (0.08 + rnd() * 0.16);
+    let step = 0;
     for (let i = 0; i < pts; i++) {
       if (i % 3 === 0) step = (rnd() - 0.5) * 0.22;
-      c1[i] = f0 * (1 + step + drift * (i / pts));
+      c1[i] = f0 * (1 + step + slide * (i / pts));
       c2[i] = (700 + rnd() * 500) * (1 + step * 0.6);
     }
     o.frequency.setValueCurveAtTime(c1, t, dur); sq.frequency.setValueCurveAtTime(c2, t, dur);
@@ -1698,7 +1696,7 @@ function fmtDuration(ms) {
 function renderStats() {
   if (!statsBody) return;
   const d = Stats.get(), n = (v) => Math.round(v).toLocaleString();
-  const avg = (a, b, dig) => (b > 0 ? (a / b).toFixed(dig == null ? 1 : dig) : 'none yet');
+  const avg = (a, b, dig) => (b > 0 ? (a / b).toFixed(dig === undefined ? 1 : dig) : 'none yet');
   const row = (k, v, sub) => `<div class="st-row"><span>${k}</span><b>${v}${sub ? `<small>${sub}</small>` : ''}</b></div>`;
   const group = (title, rows) => `<section class="st-group"><h4>${title}</h4>${rows.join('')}</section>`;
   const deepM = Math.round(Math.min(1, records.streak.streak / DEEPEST_STREAK) * 4000);
@@ -1886,12 +1884,12 @@ const Define = (() => {
   }
   function fromBackup(data) {
     if (!Array.isArray(data)) return [];
-    const out = [];
+    const groups = [];
     data.forEach((e) => (e.meanings || []).forEach((m) => {
       const defs = (m.definitions || []).map((d) => ({ text: plain(d.definition), example: plain(d.example) })).filter((d) => d.text);
-      if (defs.length) out.push({ pos: String(m.partOfSpeech || '').toLowerCase(), defs });
+      if (defs.length) groups.push({ pos: String(m.partOfSpeech || '').toLowerCase(), defs });
     }));
-    return out;
+    return groups;
   }
   // returns { found: true, groups, source } | { found: false } | { error: true }
   async function fetchDefinition(word) {
@@ -1911,7 +1909,7 @@ const Define = (() => {
     } catch (e) { /* offline */ }
     return reached ? { found: false } : { error: true };
   }
-  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined && text !== null) e.textContent = text; return e; };
   function say(text) { out.replaceChildren(el('p', 'hint', text)); }
   function show(word, res) {
     const inGame = dictionarySet.has(word) && (!strictMode || strictSet.has(word));
