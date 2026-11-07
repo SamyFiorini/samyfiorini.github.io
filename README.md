@@ -64,11 +64,11 @@ The **define** link in the header opens a word lookup (search box and a Random b
 
 ### Gems
 
-You play against a lapis lazuli gem. Pick the type of gem with the Broken, Impure and Perfect buttons next to the chain. They are locked while a match is running.
+You play against a lapis lazuli gem. The gems are better than you, so winning is not the goal: the point is a long streak and a high score. Pick the type of gem with the Broken, Impure and Perfect buttons next to the chain. They are locked while a match is running.
 
-- **Broken** only knows the everyday words in `common.txt`. It plays short, very common words, picks the ones that leave you the most ways to answer, and often avoids plurals. When it has no everyday word left for the letters you gave it, it loses.
-- **Impure** plays everyday words first. When none are left, it finds a word in the full `words.txt` list 9 times in 10, and loses the other 1 time in 10. It plays a wide range of words and avoids dead ends, but has no plan against you.
-- **Perfect** knows every word and searches the whole list. For each word it works out how many answers you would really have, counting well known words as more than obscure ones and following the tail rules the game will use, then plays one of the best few. It also checks that it will not trap itself. You are not meant to beat it. It cannot look words up on Wiktionary the way you can.
+- **Broken** only knows the everyday words in `common.txt`. It plays short, very common words, picks the ones that leave you the most ways to answer, and often avoids plurals. When it has no everyday word left for the letters you gave it, it loses. It is the only gem you have a small chance of outlasting.
+- **Impure** plays everyday words first. When none are left, it finds a word in the full `words.txt` list 9 times in 10, and loses the other 1 time in 10. Beating it is very unlikely. It plays a wide range of words and avoids dead ends, but has no plan against you.
+- **Perfect** knows every word and searches the whole list. For each word it works out how many answers you would really have, counting well known words as more than obscure ones and following the tail rules the game will use, then plays one of the best few. It also checks that it will not trap itself. You cannot beat it. It cannot look words up on Wiktionary the way you can.
 
 ### Other options
 

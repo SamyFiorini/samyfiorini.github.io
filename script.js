@@ -98,7 +98,6 @@ let matchStart = null; // what the records looked like when the match began, so 
 let typeOfGem = 'broken';
 const GEM_NAME = { broken: 'Broken', impure: 'Impure', perfect: 'Perfect' };
 
-const EMPTY_HTML = '<div class="empty">The water is still. Press start when you are ready.</div>';
 
 /* ---------- elements ---------- */
 const playerInput = document.getElementById('player-input');
@@ -524,11 +523,7 @@ function updateTimerDisplay() {
 }
 
 function handleTimeOut() {
-  if (isPlayerTurn) {
-    gameOver("Time ran out.");
-  } else {
-    playerWins("The gem ran out of time.");
-  }
+  gameOver("Time ran out.");
 }
 
 if (wordForm) {
@@ -839,7 +834,7 @@ try {
       streak: { streak: num(saved.streak.streak) || 0, score: num(saved.streak.score) }
     };
   }
-} catch (e) {}
+} catch (e) { /* no saved records, or storage is unavailable */ }
 
 function updateRecords() {
   let changed = false;
@@ -854,7 +849,7 @@ function updateRecords() {
     changed = true;
   }
   if (changed) {
-    try { localStorage.setItem('wordchain-records', JSON.stringify(records)); } catch (e) {}
+    try { localStorage.setItem('wordchain-records', JSON.stringify(records)); } catch (e) { /* storage unavailable */ }
   }
 }
 
@@ -934,7 +929,7 @@ function prepareInput() {
   playerInput.value = requiredPrefix;
   playerInput.focus();
   const n = playerInput.value.length;
-  try { playerInput.setSelectionRange(n, n); } catch (e) {}
+  try { playerInput.setSelectionRange(n, n); } catch (e) { /* not every input type allows it */ }
 }
 
 // words have to be typed: no pasting, dropping text in, or tapping a replacement suggestion
@@ -1041,7 +1036,7 @@ function gameOver(reason) {
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
   if (btnSubmit) btnSubmit.disabled = true;
   if (btnGiveUp) btnGiveUp.disabled = true;
-  Stats.endGame(false, reason, streak, matchWords);
+  Stats.endGame(false, reason, streak);
   const endStreak = streak;
   streak = 0;
   updateScoreboard();
@@ -1099,7 +1094,7 @@ function playerWins(reason) {
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
   if (btnSubmit) btnSubmit.disabled = true;
   if (btnGiveUp) btnGiveUp.disabled = true;
-  Stats.endGame(true, reason, streak, matchWords);
+  Stats.endGame(true, reason, streak);
   score += 500;
   updateScoreboard();
   showStatus(`You win. ${reason}`, "success");
@@ -1153,11 +1148,6 @@ if (btnModalOk) btnModalOk.addEventListener('click', () => {
   startAfterRules = false;
   if (go) startGame();
 });
-if (modalInstructions) {
-  modalInstructions.addEventListener('click', (e) => { if (e.target === modalInstructions) { toggleModal(false); startAfterRules = false; } });
-}
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { toggleModal(false); startAfterRules = false; } });
-
 /* ---------- ocean sound: generated live in the browser, nothing to download ---------- */
 function smoothstep(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
 const midiHz = (n) => 440 * Math.pow(2, (n - 69) / 12);
@@ -1612,8 +1602,6 @@ if (setMusic) {
   document.getElementById('btn-settings').addEventListener('click', () => toggleSettings(true));
   document.getElementById('btn-close-settings').addEventListener('click', () => toggleSettings(false));
   document.getElementById('btn-settings-ok').addEventListener('click', () => toggleSettings(false));
-  modalSettings.addEventListener('click', (e) => { if (e.target === modalSettings) toggleSettings(false); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleSettings(false); });
   // browsers only allow sound after a click or key press, so a saved "on" starts at the first one
   if (settings.music) {
     const arm = () => {
@@ -1632,10 +1620,10 @@ const MILESTONES = [10, 25, 50, 100, 150, 250];
 const lenBucket = (n) => (n <= 4 ? '2-4' : n <= 6 ? '5-6' : n <= 8 ? '7-8' : n <= 10 ? '9-10' : '11+');
 function freshStats() {
   return {
-    games: 0, wins: 0, causes: { gaveUp: 0, timeout: 0, guesses: 0, gemTime: 0, gemStuck: 0 },
+    games: 0, wins: 0, causes: { gaveUp: 0, timeout: 0, guesses: 0, gemStuck: 0 },
     words: 0, letters: 0, totalScore: 0, playMs: 0, badGuesses: 0, onlineWords: 0, lookups: 0,
     longest: { word: '', len: 0 }, bestWord: { word: '', points: 0 },
-    answerSecs: 0, answers: 0, fastest: null, streakSum: 0, longestGame: 0, lastPlayed: 0,
+    answerSecs: 0, answers: 0, fastest: null, streakSum: 0, lastPlayed: 0,
     tails: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
     lens: { '2-4': 0, '5-6': 0, '7-8': 0, '9-10': 0, '11+': 0 },
     milestones: { 10: 0, 25: 0, 50: 0, 100: 0, 150: 0, 250: 0 },
@@ -1682,15 +1670,14 @@ const Stats = (() => {
       if (data.fastest === null || secs < data.fastest) data.fastest = secs;
       save();
     },
-    endGame(won, reason, finalStreak, wordsThisGame) {
+    endGame(won, reason, finalStreak) {
       data.games++;
       if (won) data.wins++;
-      const c = /gave up/i.test(reason) ? 'gaveUp' : /Time ran out/i.test(reason) ? 'timeout' : /guesses/i.test(reason) ? 'guesses' : /gem ran out/i.test(reason) ? 'gemTime' : 'gemStuck';
+      const c = /gave up/i.test(reason) ? 'gaveUp' : /Time ran out/i.test(reason) ? 'timeout' : /guesses/i.test(reason) ? 'guesses' : 'gemStuck';
       data.causes[c]++;
       if (won) data.totalScore += 500;
       data.streakSum += finalStreak;
       MILESTONES.forEach((m) => { if (finalStreak >= m) data.milestones[m]++; });
-      data.longestGame = Math.max(data.longestGame, wordsThisGame);
       if (startedAt) data.playMs += Date.now() - startedAt;
       startedAt = 0;
       data.lastPlayed = Date.now();
@@ -1724,8 +1711,7 @@ function renderStats() {
       row('deepest you have been', n(deepM) + ' m'),
       row('highest scoring word', d.bestWord.word ? d.bestWord.word.toUpperCase() : 'none yet', d.bestWord.word ? n(d.bestWord.points) + ' points' : ''),
       row('longest word', d.longest.word ? d.longest.word.toUpperCase() : 'none yet', d.longest.word ? d.longest.len + ' letters' : ''),
-      row('fastest answer', d.fastest === null ? 'none yet' : d.fastest + ' s'),
-      row('longest match', n(d.longestGame) + ' of your words')
+      row('fastest answer', d.fastest === null ? 'none yet' : d.fastest + ' s')
     ]),
     group('Overall', [
       row('matches played', n(d.games)),
@@ -1743,7 +1729,7 @@ function renderStats() {
     group('Matching letters', [`<div class="st-miles">${[1, 2, 3, 4, 5, 6].map((k) => `<div><span>${k} letter${k > 1 ? 's' : ''}</span><b>${n(d.tails[k])}</b></div>`).join('')}</div>`]),
     group('How matches ended', [
       row('you gave up', n(d.causes.gaveUp)), row('your time ran out', n(d.causes.timeout)),
-      row('out of guesses', n(d.causes.guesses)), row('the gem ran out of time', n(d.causes.gemTime)),
+      row('out of guesses', n(d.causes.guesses)),
       row('the gem had no word', n(d.causes.gemStuck))
     ]),
     group('Guesses', [
@@ -1780,8 +1766,6 @@ if (modalStats) {
   document.getElementById('btn-stats').addEventListener('click', () => toggleStats(true));
   document.getElementById('btn-close-stats').addEventListener('click', () => toggleStats(false));
   document.getElementById('btn-stats-ok').addEventListener('click', () => toggleStats(false));
-  modalStats.addEventListener('click', (e) => { if (e.target === modalStats) toggleStats(false); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleStats(false); });
   btnErase.addEventListener('click', () => {
     if (!eraseArmed) {
       eraseArmed = true;
@@ -1877,8 +1861,6 @@ const Results = (() => {
   document.getElementById('btn-close-results').addEventListener('click', Results.close);
   document.getElementById('btn-results-close').addEventListener('click', Results.close);
   document.getElementById('btn-results-again').addEventListener('click', () => { Results.close(); startGame(); });
-  modal.addEventListener('click', (e) => { if (e.target === modal) Results.close(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') Results.close(); });
 })();
 
 /* ---------- word lookup (never during a match) ---------- */
@@ -1979,8 +1961,6 @@ const Define = (() => {
   if (!modal) return;
   document.getElementById('btn-define').addEventListener('click', () => Define.open());
   document.getElementById('btn-close-define').addEventListener('click', Define.close);
-  modal.addEventListener('click', (e) => { if (e.target === modal) Define.close(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') Define.close(); });
   document.getElementById('define-form').addEventListener('submit', (e) => { e.preventDefault(); Define.lookup(document.getElementById('define-input').value); });
   document.getElementById('define-random').addEventListener('click', () => {
     const pool = [...commonRank.keys()].filter((w) => w.length >= 5 && w.length <= 10 && commonRank.get(w) < 15000);
