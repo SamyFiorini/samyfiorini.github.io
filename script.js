@@ -1596,18 +1596,18 @@ if (setMusic) {
   const readNum = (el, max) => { const v = Math.floor(Number(el.value)); return Number.isFinite(v) && v > 0 ? Math.min(max, v) : 0; };
   setMinStreak.addEventListener('change', () => { settings.minStreak = readNum(setMinStreak, 9999); setMinStreak.value = settings.minStreak; saveSettings(); });
   setMinScore.addEventListener('change', () => { settings.minScore = readNum(setMinScore, 9999999); setMinScore.value = settings.minScore; saveSettings(); });
-  setFollow.addEventListener('change', () => {
-    if (!depthUnlocked()) { syncDepthUI(); return; }
-    settings.follow = setFollow.checked;
-    if (!settings.follow) settings.preview = Math.min(DEEPEST_STREAK, streak);
-    saveSettings(); updateDepth();
-  });
   let peekTimer = null;
   const peek = () => {
     document.body.classList.add('previewing'); modalSettings.classList.add('peek');
     clearTimeout(peekTimer);
     peekTimer = setTimeout(() => { modalSettings.classList.remove('peek'); document.body.classList.remove('previewing'); }, 1800);
   };
+  setFollow.addEventListener('change', () => {
+    if (!depthUnlocked()) { syncDepthUI(); return; }
+    settings.follow = setFollow.checked;
+    if (!settings.follow) settings.preview = Math.min(DEEPEST_STREAK, streak);
+    saveSettings(); peek(); updateDepth();
+  });
   setPreview.addEventListener('input', () => { settings.preview = +setPreview.value; saveSettings(); peek(); updateDepth(); });
   document.getElementById('btn-settings').addEventListener('click', () => toggleSettings(true));
   document.getElementById('btn-close-settings').addEventListener('click', () => toggleSettings(false));
