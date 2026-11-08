@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<title>Word Chain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="sea-mid" class="sea sea-mid" aria-hidden="true"></div>
+<div id="sea-deep" class="sea sea-deep" aria-hidden="true"></div>
+<div id="sea-structure" class="sea-structure" aria-hidden="true"></div>
+<div class="light" aria-hidden="true"></div>
+<canvas id="particles" aria-hidden="true"></canvas>
+
+<div class="shell">
+
+  <header class="top">
+    <div class="brand">
+      <h1>Word Chain</h1>
+      <p>version 1.0.0</p>
+    </div>
+    <div class="top-links">
+      <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
+      <button id="btn-define" class="link" type="button">define</button>
+      <button id="btn-stats" class="link" type="button">stats</button>
+      <button id="btn-settings" class="link" type="button">settings</button>
+      <button id="btn-how-to-play" class="link" type="button">rules</button>
+    </div>
+  </header>
+
+  <div class="cols">
+
+    <div class="col">
+      <section class="stage">
+        <p class="eyebrow">begin with</p>
+        <div id="target-prefix-display" class="prefix any">Any word</div>
+        <p id="target-meta" class="prefix-meta">press start when you are ready</p>
+
+        <div class="timer" id="timer-wrap" data-level="ok">
+          <div class="track"><div id="timer-bar" class="fill"></div></div>
+          <span id="timer-display">20s</span>
+        </div>
+
+        <div class="actions">
+          <button id="btn-start" class="btn primary" type="button">Start</button>
+          <button id="btn-give-up" class="btn ghost" type="button" disabled>Give up</button>
+        </div>
+
+        <div id="bubbles" class="bubbles idle" role="img" aria-label="5 guesses left" title="5 tries per word. Every word that is not in the dictionary pops a bubble.">
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="score" aria-label="Score">
+        <div class="score-row">
+          <div class="stat"><span>score</span><b id="header-score">0</b></div>
+          <div class="stat streak"><span>streak</span><b id="header-streak">0</b></div>
+          <div class="stat quiet-stat"><span>multiplier</span><b id="header-mult">&times;1.00</b></div>
+          <div class="stat quiet-stat"><span>best score</span><b id="header-best">0</b><small id="best-score-sub"></small></div>
+          <div class="stat quiet-stat"><span>best streak</span><b id="header-best-streak">0</b><small id="best-streak-sub"></small></div>
+        </div>
+        <p id="score-breakdown" class="breakdown">Longer words and unbroken streaks score more.</p>
+      </section>
+
+      <p id="status-message" class="status quiet" role="status" aria-live="polite"></p>
+
+      <form id="word-form" class="entry" autocomplete="off">
+        <div class="field">
+          <input type="text" id="player-input" name="word" disabled autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word" aria-label="Your word" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+          <div id="input-mirror" class="mirror" aria-hidden="true"></div>
+        </div>
+        <button type="submit" id="btn-submit" disabled aria-label="Submit word">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="col">
+      <section class="settings">
+        <div class="seg" role="group" aria-label="Tail length rule">
+          <button type="button" data-rule="weighted" class="mode-btn is-active">Escalating</button>
+          <button type="button" data-rule="1" class="mode-btn" aria-label="1 letter">1</button>
+          <button type="button" data-rule="2" class="mode-btn" aria-label="2 letters">2</button>
+          <button type="button" data-rule="3" class="mode-btn" aria-label="3 letters">3</button>
+          <button type="button" data-rule="4" class="mode-btn" aria-label="4 letters">4</button>
+          <button type="button" data-rule="5" class="mode-btn" aria-label="5 letters">5</button>
+          <button type="button" data-rule="6" class="mode-btn" aria-label="6 letters">6</button>
+          <span class="seg-note" aria-hidden="true">letters</span>
+        </div>
+        <div class="gem-picker" role="group" aria-label="Type of gem">
+          <span>type of gem</span>
+          <div class="seg">
+            <button type="button" data-gem="broken" class="mode-btn gem-btn is-active" title="Knows only everyday words">Broken</button>
+            <button type="button" data-gem="impure" class="mode-btn gem-btn" title="Plays everyday words first, then rarer ones">Impure</button>
+            <button type="button" data-gem="perfect" class="mode-btn gem-btn" title="Knows every word and sets traps">Perfect</button>
+          </div>
+        </div>
+        <label class="toggle" title="Only everyday words, for you and the gem">
+          <input type="checkbox" id="strict-mode" disabled>
+          <span class="switch" aria-hidden="true"></span>
+          <span>common words only</span>
+        </label>
+      </section>
+
+      <section class="odds" aria-label="Tail length odds">
+        <span id="prob-stage-label">Phase 0: Shallows (streak 0-49)</span>
+        <div class="odds-list">
+          <div class="odd" id="odd-1" title="1 matching letter"><div><span>1</span><b id="prob-val-1">0%</b></div><i></i></div>
+          <div class="odd" id="odd-2" title="2 matching letters"><div><span>2</span><b id="prob-val-2">0%</b></div><i></i></div>
+          <div class="odd" id="odd-3" title="3 matching letters"><div><span>3</span><b id="prob-val-3">0%</b></div><i></i></div>
+          <div class="odd" id="odd-4" title="4 matching letters"><div><span>4</span><b id="prob-val-4">0%</b></div><i></i></div>
+          <div class="odd" id="odd-5" title="5 matching letters"><div><span>5</span><b id="prob-val-5">0%</b></div><i></i></div>
+          <div class="odd" id="odd-6" title="6 matching letters"><div><span>6</span><b id="prob-val-6">0%</b></div><i></i></div>
+        </div>
+      </section>
+
+      <section class="chain">
+        <div class="chain-head">
+          <span>the chain</span>
+          <span id="chain-length-badge">0 words</span>
+        </div>
+        <div id="chain-feed" class="feed">
+          <div class="empty">The water is still. Press start when you are ready.</div>
+        </div>
+      </section>
+
+      <section id="game-over-suggestions" class="sugs hidden">
+        <div class="sugs-head">
+          <h3>Words that would have worked <small>easiest to hardest</small></h3>
+          <span id="suggestion-prefix-badge"></span>
+        </div>
+        <div id="suggestion-words-list" class="sugs-grid"></div>
+      </section>
+    </div>
+
+  </div>
+
+  <div id="dictionary-status" class="dict"><span class="dot loading"></span>loading dictionary</div>
+</div>
+
+<div id="modal-instructions" class="modal hidden">
+  <div class="sheet wide">
+    <div class="sheet-head">
+      <h3>How it works</h3>
+      <button id="btn-close-modal" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div id="rules-body">
+
+      <div class="st-col">
+        <section class="st-group">
+          <h4>The rule</h4>
+          <p class="ru-p">Each word has to begin with the letters the last word ended on. Those letters are already typed for you, and the word can be just those letters, like <span class="tail">me</span> after so<span class="tail">me</span>.</p>
+          <ul>
+            <li><span>1 letter</span><span>lio<span class="tail">n</span> &rarr; <span class="tail">n</span>ight</span></li>
+            <li><span>2 letters</span><span>drag<span class="tail">on</span> &rarr; <span class="tail">on</span>line</span></li>
+            <li><span>3 letters</span><span>compu<span class="tail">ter</span> &rarr; <span class="tail">ter</span>rain</span></li>
+            <li><span>6 letters</span><span>under<span class="tail">ground</span> &rarr; <span class="tail">ground</span>s</span></li>
+          </ul>
+        </section>
+        <section class="st-group">
+          <h4>Tries and time</h4>
+          <p class="ru-p">You get 20 seconds a turn and 5 tries a word. Every word that is not in the dictionary pops one of the five bubbles, and when they are all gone the match ends. Wrong starting letters and words already used are free.</p>
+        </section>
+      </div>
+
+      <div class="st-col">
+        <section class="st-group">
+          <h4>Scoring</h4>
+          <div class="st-row"><span>each letter</span><b>10 points</b></div>
+          <div class="st-row"><span>letters past 5</span><b>(extra)&sup2; &times; 10</b></div>
+          <div class="st-row"><span>each word in a row</span><b>+0.05 &times;</b></div>
+          <div class="st-row"><span>if a gem ever runs out</span><b>+500</b></div>
+          <p class="ru-p small">Long words and streaks have no limit. The streak resets when a match ends. Matching more letters multiplies the word:</p>
+          <div class="st-miles">
+            <div><span>2</span><b>&times;1.5</b></div><div><span>3</span><b>&times;2</b></div><div><span>4</span><b>&times;2.5</b></div>
+            <div><span>5</span><b>&times;3</b></div><div><span>6</span><b>&times;3.5</b></div>
+          </div>
+        </section>
+        <section class="st-group">
+          <h4>Phases and depth</h4>
+          <p class="ru-p">Every 50 of streak is a new phase, from 0 to 5 at 250. The water gets deeper, the sound changes, and the matches get longer.</p>
+          <div class="st-row"><span>phase 0, streak 0</span><b>up to 3</b></div>
+          <div class="st-row"><span>phase 1, streak 50</span><b>4 appears</b></div>
+          <div class="st-row"><span>phase 3, streak 150</span><b>5 appears</b></div>
+          <div class="st-row"><span>phase 5, streak 250</span><b>6, under 1%</b></div>
+        </section>
+      </div>
+
+      <div class="st-col">
+        <section class="st-group">
+          <h4>The gems</h4>
+          <p class="ru-p">The gems are better than you, so winning is not the goal. Chase a long streak and a high score.</p>
+          <p class="ru-p gem"><b>Broken</b> only knows everyday words. It plays short, simple ones and leaves you easy endings, and it loses when it runs out. Your only small chance of winning.</p>
+          <p class="ru-p gem"><b>Impure</b> plays everyday words first. When none are left, it finds a rarer word 9 times in 10 and is stuck the other time. Very hard to beat.</p>
+          <p class="ru-p gem"><b>Perfect</b> knows every word and picks the ones that leave you the fewest ways to answer. You cannot beat it.</p>
+        </section>
+        <section class="st-group">
+          <h4>Good to know</h4>
+          <p class="ru-p">Words have to be typed. &ldquo;Common words only&rdquo; limits you and the gem to everyday words. Looking up an unfamiliar word online pauses the clock for up to 6 seconds a turn. The gem, the length and common words are locked while a match is running.</p>
+        </section>
+      </div>
+
+    </div>
+    <div class="ru-foot"><button id="btn-modal-ok" class="btn primary" type="button">Got it</button></div>
+  </div>
+</div>
+
+<div id="modal-stats" class="modal hidden">
+  <div class="sheet wide">
+    <div class="sheet-head">
+      <h3>Stats</h3>
+      <button id="btn-close-stats" class="x-btn" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div id="stats-body"></div>
+    <div class="st-foot">
+      <p class="hint">Saved only in this browser. Erasing removes your records, stats and settings and cannot be undone. <span id="erase-note" role="status"></span></p>
+      <button id="btn-erase" class="btn ghost danger" type="button">Erase all saved data</button>
+      <button id="btn-stats-ok" class="btn primary" type="button">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-results" class="modal hidden">
+  <div class="sheet wide results">
+    <div class="sheet-head">
+      <h3 id="res-title">Match over</h3>
+      <button id="btn-close-results" class="x-btn" type="button" aria-label="Close">&times;</button>
+    </div>
+    <p id="res-reason" class="res-reason"></p>
+    <div id="res-body"></div>
+    <div class="st-foot">
+      <p class="hint">Only matches you play on this device are counted.</p>
+      <button id="btn-results-close" class="btn ghost" type="button">Close</button>
+      <button id="btn-results-again" class="btn primary" type="button">Play again</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-define" class="modal hidden">
+  <div class="sheet def">
+    <div class="sheet-head">
+      <h3>Look up a word</h3>
+      <button id="btn-close-define" class="x-btn" type="button" aria-label="Close">&times;</button>
+    </div>
+    <form id="define-form" class="def-form" autocomplete="off">
+      <input type="text" id="define-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word" aria-label="Word to look up" maxlength="40">
+      <button class="btn primary" type="submit">Look up</button>
+      <button id="define-random" class="btn ghost" type="button">Random</button>
+    </form>
+    <div id="define-result" class="def-result" aria-live="polite"><p class="hint">Type any word, or press Random. Definitions come from Wiktionary, so you need to be online.</p></div>
+    <p class="hint def-foot">Lookups are only available between matches.</p>
+  </div>
+</div>
+
+<div id="modal-settings" class="modal hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>Settings</h3>
+      <button id="btn-close-settings" class="x-btn" type="button" aria-label="Close">&times;</button>
+    </div>
+
+    <section class="set-group">
+      <h4>Sound</h4>
+      <label class="toggle big">
+        <input type="checkbox" id="set-music">
+        <span class="switch" aria-hidden="true"></span>
+        <span>ocean sound</span>
+      </label>
+      <p class="hint">Made live in your browser. Chimes and a tiny chiptune at the surface, then bubbles, a piano that drifts out of tune, deep groans and slow swells in the deep. Words make the harmony pulse.</p>
+      <p id="sound-note" class="hint" role="status"></p>
+      <div class="slider"><label for="set-volume">volume</label><input type="range" id="set-volume" min="0" max="100"><output id="out-volume"></output></div>
+      <details class="mix">
+        <summary>mix the layers</summary>
+        <div class="mix-body">
+          <div class="slider"><label for="set-water">water</label><input type="range" id="set-water" min="0" max="100"><output id="out-water"></output></div>
+          <div class="slider"><label for="set-pads">harmony</label><input type="range" id="set-pads" min="0" max="100"><output id="out-pads"></output></div>
+          <div class="slider"><label for="set-chimes">chimes</label><input type="range" id="set-chimes" min="0" max="100"><output id="out-chimes"></output></div>
+          <div class="slider"><label for="set-drone">deep hum</label><input type="range" id="set-drone" min="0" max="100"><output id="out-drone"></output></div>
+          <div class="slider"><label for="set-calls">calls</label><input type="range" id="set-calls" min="0" max="100"><output id="out-calls"></output></div>
+          <div class="slider"><label for="set-bubbles">bubbles</label><input type="range" id="set-bubbles" min="0" max="100"><output id="out-bubbles"></output></div>
+          <div class="slider"><label for="set-groans">groans</label><input type="range" id="set-groans" min="0" max="100"><output id="out-groans"></output></div>
+          <div class="slider"><label for="set-dread">dread</label><input type="range" id="set-dread" min="0" max="100"><output id="out-dread"></output></div>
+          <div class="slider"><label for="set-lapis">piano</label><input type="range" id="set-lapis" min="0" max="100"><output id="out-lapis"></output></div>
+          <div class="slider"><label for="set-chip">chiptune</label><input type="range" id="set-chip" min="0" max="100"><output id="out-chip"></output></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="set-group">
+      <h4>Play</h4>
+      <label class="toggle">
+        <input type="checkbox" id="set-results">
+        <span class="switch" aria-hidden="true"></span>
+        <span>show a results screen after matches</span>
+      </label>
+      <div class="res-min">
+        <span>only when the streak is at least</span>
+        <input type="number" id="set-min-streak" min="0" max="9999" step="1" inputmode="numeric" aria-label="Minimum streak">
+        <span>or the score is at least</span>
+        <input type="number" id="set-min-score" min="0" max="9999999" step="100" inputmode="numeric" aria-label="Minimum score">
+        <span class="hint">(0 for every match)</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="set-mask">
+        <span class="switch" aria-hidden="true"></span>
+        <span>hide keyboard suggestions</span>
+      </label>
+      <p class="hint">Stops phone keyboards from suggesting words. On by default on touch screens. Turn it off if password pop-ups appear.</p>
+      <label class="toggle">
+        <input type="checkbox" id="set-fade">
+        <span class="switch" aria-hidden="true"></span>
+        <span>fade the sound as the clock runs out</span>
+      </label>
+      <p class="hint">It starts at 10 seconds left and is silent when you lose. The sound returns when you close the results, or at once if none appear.</p>
+    </section>
+
+    <section class="set-group">
+      <h4>Depth</h4>
+      <label class="toggle big">
+        <input type="checkbox" id="set-follow">
+        <span class="switch" aria-hidden="true"></span>
+        <span>follow my streak</span>
+      </label>
+      <p id="depth-hint" class="hint"></p>
+      <div class="slider"><label for="set-preview">streak</label><input type="range" id="set-preview" min="0" max="250"><output id="out-preview"></output></div>
+    </section>
+
+    <div id="support" class="support hidden">
+      <p class="hint">I make this game on my own. If you enjoy it, you can support me on Ko-fi.</p>
+      <a id="kofi-link" class="btn ghost kofi" href="#" target="_blank" rel="noopener noreferrer">Support me on Ko-fi</a>
+    </div>
+    <button id="btn-settings-ok" class="btn primary" type="button">Done</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
