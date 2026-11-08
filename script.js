@@ -779,7 +779,7 @@ async function existsOnline(word) {
 
 let records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
 try {
-  const saved = JSON.parse(localStorage.getItem('wordchain-records') || 'null');
+  const saved = JSON.parse(localStorage.getItem('lapizurite-records') || 'null');
   const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null);
   if (saved && saved.score && saved.streak) {
     records = {
@@ -802,7 +802,7 @@ function updateRecords() {
     changed = true;
   }
   if (changed) {
-    try { localStorage.setItem('wordchain-records', JSON.stringify(records)); } catch { }
+    try { localStorage.setItem('lapizurite-records', JSON.stringify(records)); } catch { }
   }
 }
 
@@ -1069,7 +1069,7 @@ if (btnGiveUp) {
     }
   });
 }
-const RULES_SEEN_KEY = 'wordchain-hint-seen';
+const RULES_SEEN_KEY = 'lapizurite-hint-seen';
 let startAfterRules = false;
 function rulesSeen() { try { return localStorage.getItem(RULES_SEEN_KEY) === '1'; } catch (e) { return true; } }
 if (btnStart) btnStart.addEventListener('click', () => {
@@ -1410,8 +1410,8 @@ function createOcean(ctx, dest, seed) {
 }
 
 const KOFI_URL = 'https://ko-fi.com/samyfiorini';
-const SETTINGS_KEY = 'wordchain-settings';
-const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, groans: 80, dread: 80, lapis: 80, chip: 80 }, fade: true, follow: true, preview: 0, results: true, minStreak: 0, minScore: 0, maskInput: null };
+const SETTINGS_KEY = 'lapizurite-settings';
+const DEFAULT_SETTINGS = { music: false, volume: 60, layers: { water: 80, pads: 80, chimes: 80, drone: 80, calls: 80, bubbles: 80, groans: 80, dread: 80, lapis: 80, chip: 80 }, fade: true, follow: true, preview: 0, results: true, minStreak: 0, minScore: 0, keyboard: null };
 const clampNum = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
 function loadSettings() {
   const s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -1422,7 +1422,7 @@ function loadSettings() {
       if (typeof raw.follow === 'boolean') s.follow = raw.follow;
       if (typeof raw.results === 'boolean') s.results = raw.results;
       if (typeof raw.fade === 'boolean') s.fade = raw.fade;
-      if (typeof raw.maskInput === 'boolean') s.maskInput = raw.maskInput;
+      if (typeof raw.keyboard === 'boolean') s.keyboard = raw.keyboard;
       if (Number.isFinite(raw.minStreak) && raw.minStreak >= 0) s.minStreak = Math.min(9999, Math.floor(raw.minStreak));
       if (Number.isFinite(raw.minScore) && raw.minScore >= 0) s.minScore = Math.min(9999999, Math.floor(raw.minScore));
       if (records.streak.streak < 250) s.follow = true;
@@ -1524,7 +1524,7 @@ const setMusic = document.getElementById('set-music');
 const setVolume = document.getElementById('set-volume');
 const setFollow = document.getElementById('set-follow');
 const setResults = document.getElementById('set-results');
-const setMask = document.getElementById('set-mask');
+const setKeyboard = document.getElementById('set-keyboard');
 const setFadeOut = document.getElementById('set-fade');
 const setMinStreak = document.getElementById('set-min-streak');
 const setMinScore = document.getElementById('set-min-score');
@@ -1553,7 +1553,7 @@ function syncSettingsUI() {
   if (!setMusic) return;
   setMusic.checked = settings.music;
   setResults.checked = settings.results;
-  setMask.checked = maskOn();
+  setKeyboard.checked = keyboardOn();
   setFadeOut.checked = settings.fade;
   setMinStreak.value = settings.minStreak;
   setMinScore.value = settings.minScore;
@@ -1591,7 +1591,7 @@ if (setMusic) {
     r.addEventListener('input', () => { settings.layers[n] = +r.value; paintRange(r); saveSettings(); Ocean.setLayer(n); });
   });
   setFadeOut.addEventListener('change', () => { settings.fade = setFadeOut.checked; saveSettings(); if (!settings.fade) Ocean.restore(); });
-  setMask.addEventListener('change', () => { settings.maskInput = setMask.checked; saveSettings(); applyMask(); });
+  setKeyboard.addEventListener('change', () => { settings.keyboard = setKeyboard.checked; saveSettings(); applyKeyboard(); });
   setResults.addEventListener('change', () => { settings.results = setResults.checked; saveSettings(); });
   const readNum = (el, max) => { const v = Math.floor(Number(el.value)); return Number.isFinite(v) && v > 0 ? Math.min(max, v) : 0; };
   setMinStreak.addEventListener('change', () => { settings.minStreak = readNum(setMinStreak, 9999); setMinStreak.value = settings.minStreak; saveSettings(); });
@@ -1622,7 +1622,7 @@ if (setMusic) {
   syncSettingsUI();
 }
 
-const STATS_KEY = 'wordchain-stats';
+const STATS_KEY = 'lapizurite-stats';
 const LEN_BUCKETS = ['2-4', '5-6', '7-8', '9-10', '11+'];
 const MILESTONES = [10, 25, 50, 100, 150, 250];
 const lenBucket = (n) => (n <= 4 ? '2-4' : n <= 6 ? '5-6' : n <= 8 ? '7-8' : n <= 10 ? '9-10' : '11+');
@@ -1761,7 +1761,7 @@ const btnErase = document.getElementById('btn-erase');
 let eraseArmed = false, eraseTimer = null;
 function disarmErase() { eraseArmed = false; clearTimeout(eraseTimer); if (btnErase) btnErase.textContent = 'Erase all saved data'; }
 function eraseAll() {
-  ['wordchain-records', STATS_KEY, SETTINGS_KEY, RULES_SEEN_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch { } });
+  ['lapizurite-records', STATS_KEY, SETTINGS_KEY, RULES_SEEN_KEY].forEach((k) => { try { localStorage.removeItem(k); } catch { } });
   records = { score: { score: 0, streak: null }, streak: { streak: 0, score: null } };
   Stats.reset();
   Ocean.stop();
@@ -1976,8 +1976,9 @@ const Define = (() => {
 
 const inputField = playerInput ? playerInput.closest('.field') : null;
 const inputMirror = document.getElementById('input-mirror');
+const vkPanel = document.getElementById('vk');
 function touchScreen() { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); }
-function maskOn() { return typeof settings.maskInput === 'boolean' ? settings.maskInput : touchScreen(); }
+function keyboardOn() { return typeof settings.keyboard === 'boolean' ? settings.keyboard : touchScreen(); }
 function drawMirror() {
   if (!inputMirror || !playerInput) return;
   inputMirror.replaceChildren();
@@ -1988,15 +1989,36 @@ function drawMirror() {
   caret.className = 'caret';
   inputMirror.append(caret);
 }
-function applyMask() {
-  if (!playerInput || !inputField) return;
-  const on = maskOn();
-  playerInput.type = on ? 'password' : 'text';
-  inputField.classList.toggle('masked', on);
+
+const canType = () => isGameActive && isPlayerTurn && !playerInput.disabled;
+function typeLetter(ch) { if (canType() && playerInput.value.length < 45) playerInput.value += ch; }
+function eraseLetter(warn) {
+  if (!canType()) return;
+  const v = playerInput.value;
+  if (v.length > requiredPrefix.length) playerInput.value = v.slice(0, -1);
+  else if (warn) shakeInput();
+}
+function sendWord() {
+  if (!canType()) return;
+  if (wordForm.requestSubmit) wordForm.requestSubmit(); else wordForm.dispatchEvent(new Event('submit', { cancelable: true }));
+}
+
+const keyboardHome = wordForm ? { parent: wordForm.parentNode, next: wordForm.nextSibling } : null;
+function applyKeyboard() {
+  if (!playerInput || !inputField || !vkPanel || !wordForm) return;
+  const on = keyboardOn();
+  playerInput.readOnly = on;
+  if (on) playerInput.setAttribute('inputmode', 'none'); else playerInput.removeAttribute('inputmode');
+  inputField.classList.toggle('virtual', on);
+  vkPanel.classList.toggle('hidden', !on);
+  document.body.classList.toggle('vk-on', on);
+  if (on) vkPanel.prepend(wordForm); else keyboardHome.parent.insertBefore(wordForm, keyboardHome.next);
+  vkPanel.classList.toggle('off', playerInput.disabled);
+  document.documentElement.style.setProperty('--vk-h', on ? vkPanel.offsetHeight + 'px' : '0px');
   drawMirror();
 }
-(function wireMask() {
-  if (!playerInput || !inputField) return;
+(function wireKeyboard() {
+  if (!playerInput || !inputField || !vkPanel || !wordForm) return;
   const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   Object.defineProperty(playerInput, 'value', {
     configurable: true,
@@ -2004,10 +2026,66 @@ function applyMask() {
     set(v) { desc.set.call(this, v); drawMirror(); }
   });
   playerInput.addEventListener('input', drawMirror);
-  const toEnd = () => { if (!inputField.classList.contains('masked')) return; const n = playerInput.value.length; try { playerInput.setSelectionRange(n, n); } catch { } };
-  ['focus', 'click', 'select', 'keyup'].forEach((t) => playerInput.addEventListener(t, () => setTimeout(toEnd, 0)));
   inputField.addEventListener('click', () => { if (!playerInput.disabled) playerInput.focus(); });
-  applyMask();
+
+  const ICONS = {
+    enter: '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 6v5a3 3 0 0 1-3 3H5M9 10l-4 4 4 4"/></svg>',
+    back: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11v14H9l-6-7z"/><path d="M13 9.5l4 5M17 9.5l-4 5"/></svg>'
+  };
+  const makeKey = (k, label) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'key'; b.dataset.k = k;
+    if (ICONS[k]) { b.innerHTML = ICONS[k]; b.classList.add('wide'); b.setAttribute('aria-label', k === 'enter' ? 'Submit word' : 'Delete letter'); }
+    else b.textContent = label;
+    return b;
+  };
+  const keys = document.createElement('div');
+  keys.className = 'vk-keys';
+  ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].forEach((letters, i) => {
+    const row = document.createElement('div');
+    row.className = i === 1 ? 'vk-row mid' : 'vk-row';
+    if (i === 2) row.append(makeKey('enter'));
+    [...letters].forEach((ch) => row.append(makeKey(ch, ch)));
+    if (i === 2) row.append(makeKey('back'));
+    keys.append(row);
+  });
+  vkPanel.append(keys);
+
+  const press = (k, repeating) => {
+    if (k === 'enter') sendWord();
+    else if (k === 'back') eraseLetter(!repeating);
+    else typeLetter(k);
+  };
+  let holdDelay = null, holdRepeat = null;
+  const release = () => {
+    clearTimeout(holdDelay); clearInterval(holdRepeat);
+    keys.querySelectorAll('.down').forEach((b) => b.classList.remove('down'));
+  };
+  keys.addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('.key');
+    if (!b) return;
+    e.preventDefault();
+    b.classList.add('down');
+    press(b.dataset.k);
+    if (b.dataset.k === 'back') holdDelay = setTimeout(() => { holdRepeat = setInterval(() => press('back', true), 70); }, 380);
+  });
+  keys.addEventListener('click', (e) => {
+    const b = e.target.closest('.key');
+    if (b && e.detail === 0) press(b.dataset.k);
+  });
+  ['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, release));
+  window.addEventListener('blur', release);
+
+  document.addEventListener('keydown', (e) => {
+    if (!keyboardOn() || e.target !== playerInput || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Backspace') { e.preventDefault(); eraseLetter(!e.repeat); }
+    else if (e.key === 'Enter') { e.preventDefault(); sendWord(); }
+    else if (/^[a-z]$/i.test(e.key)) { e.preventDefault(); if (!e.repeat) typeLetter(e.key.toLowerCase()); }
+  });
+
+  new MutationObserver(() => vkPanel.classList.toggle('off', playerInput.disabled)).observe(playerInput, { attributes: true, attributeFilter: ['disabled'] });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (keyboardOn()) document.documentElement.style.setProperty('--vk-h', vkPanel.offsetHeight + 'px'); }).observe(vkPanel);
+  applyKeyboard();
 })();
 
 updateScoreboard();

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<title>Word Chain</title>
+<title>Lapizurite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,8 +22,8 @@
 
   <header class="top">
     <div class="brand">
-      <h1>Word Chain</h1>
-      <p>version 1.0.3</p>
+      <h1>Lapizurite</h1>
+      <p>version 1.1.0</p>
     </div>
     <div class="top-links">
       <span id="depth-readout" class="depth" data-zone="sunlit">0 m</span>
@@ -307,11 +307,11 @@
         <span class="hint">(0 for every match)</span>
       </div>
       <label class="toggle">
-        <input type="checkbox" id="set-mask">
+        <input type="checkbox" id="set-keyboard">
         <span class="switch" aria-hidden="true"></span>
-        <span>hide keyboard suggestions</span>
+        <span>built-in keyboard</span>
       </label>
-      <p class="hint">Stops phone keyboards from suggesting words. On by default on touch screens. Turn it off if password pop-ups appear.</p>
+      <p class="hint">Replaces your phone's keyboard, so there are no suggestions or swipe typing. On by default on touch screens.</p>
       <label class="toggle">
         <input type="checkbox" id="set-fade">
         <span class="switch" aria-hidden="true"></span>
@@ -338,6 +338,8 @@
     <button id="btn-settings-ok" class="btn primary" type="button">Done</button>
   </div>
 </div>
+
+<div id="vk" class="vk hidden" role="group" aria-label="On-screen keyboard"></div>
 
 <script src="script.js"></script>
 </body>
