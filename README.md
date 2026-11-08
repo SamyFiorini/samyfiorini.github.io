@@ -8,7 +8,7 @@ A deep-ocean themed word game. Each word has to start with the letters the last 
 - Each word must begin with the end of the previous word: `lio`**`n`** then **`n`**`ight`.
 - The matching letters are already typed for you. The word can be just those letters, like `me` after `so`**`me`**.
 - You have 20 seconds per turn. No word can be used twice in a match.
-- You get 5 tries per word, shown as five bubbles. Every word that is not in the dictionary pops one, and losing all five ends the match. Wrong starting letters, words already used and failed online lookups do not cost a bubble.
+- You get 5 tries per word, shown as five bubbles. Every word that is not in the dictionary pops one, and losing all five ends the match. Words already used and failed online lookups do not cost a bubble.
 - **Escalating** mode has six phases, one for every 50 of streak, from phase 0 (streak 0) to phase 5 (streak 250 and up). Each phase has its own chance of needing to match 1 to 6 letters, and the odds are shown next to the chain. You can also fix the match at 1 to 6 letters. In a fixed match of 4 or more the gem aims for words that really end that way, but when no word can follow, the game falls back to a shorter match, and your own words decide the endings too, so 5 and 6 are rare.
 - A match is only handed out when enough words can follow it (several, with at least two everyday ones). That keeps endings like -NG, which only three obscure words start with, from showing up.
 
@@ -29,8 +29,9 @@ A long match is only used when some unused word can follow it. Otherwise the gam
 
 - 10 points per letter.
 - Words longer than 5 letters earn a growing bonus, with no limit.
-- Each extra matching letter adds 0.5 to the word's multiplier: 2 letters is x1.5, 3 is x2, up to x3.5 for 6.
+- Matching more letters multiplies the word by the number of letters matched: x2 for 2 letters, x3 for 3, up to x6 for 6.
 - Each word in a row adds 0.05 to a streak multiplier, with no upper limit.
+- If a gem ever runs out of words, your final score is multiplied by 1.25.
 - Your best score and best streak are saved in your browser. Each one shows the other number from the same match, since the longest streak is not always the highest score.
 
 ### Depth and sound
@@ -52,7 +53,7 @@ When a match ends, a results screen shows your score, streak, words, letters, lo
 
 ### Looking up words
 
-The **define** link in the header opens a word lookup (search box and a Random button). Definitions come from the Wiktionary REST API, with dictionaryapi.dev as a backup, and need an internet connection. It shows whether the word is valid in the game. Lookups are locked while a match is running, and the words in the results screen and the "would have worked" list open here once the match is over.
+The **define** link in the header opens a word lookup (search box and a Random button). Definitions come from the Wiktionary REST API, with dictionaryapi.dev as a backup, and need an internet connection. If a word has no entry (for example a plural or past tense), it tries the likely base form and says so. It shows whether the word is valid in the game. Lookups are locked while a match is running, and the words in the results screen and the "would have worked" list open here once the match is over.
 
 ### Fair play
 

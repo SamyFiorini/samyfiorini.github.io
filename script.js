@@ -806,6 +806,8 @@ function updateRecords() {
   }
 }
 
+const GEM_OUT_MULT = 1.25;
+
 function streakMultiplier(n) {
   return 1 + n * 0.05;
 }
@@ -814,7 +816,7 @@ function scoreWord(word, tail, streakBefore) {
   const base = word.length * 10;
   const extra = Math.max(0, word.length - 5);
   const lengthBonus = extra * extra * 10;
-  const tailMult = 1 + (tail - 1) * 0.5;
+  const tailMult = tail;
   const streakMult = streakMultiplier(streakBefore);
   const total = Math.round((base + lengthBonus) * tailMult * streakMult);
   return { base, lengthBonus, tailMult, streakMult, total };
@@ -1041,10 +1043,11 @@ function playerWins(reason) {
   if (playerInput) { playerInput.disabled = true; playerInput.value = ''; }
   if (btnSubmit) btnSubmit.disabled = true;
   if (btnGiveUp) btnGiveUp.disabled = true;
-  Stats.endGame(true, reason, streak);
-  score += 500;
+  const bonus = Math.round(score * GEM_OUT_MULT) - score;
+  Stats.endGame(true, reason, streak, bonus);
+  score += bonus;
   updateScoreboard();
-  showStatus(`You win. ${reason}`, "success");
+  showStatus(`You win. ${reason} Final score \u00d7${GEM_OUT_MULT}.`, "success");
   syncBubbles(false);
   Results.later(true, reason, streak);
 }
@@ -1678,12 +1681,12 @@ const Stats = (() => {
       if (data.fastest === null || secs < data.fastest) data.fastest = secs;
       save();
     },
-    endGame(won, reason, finalStreak) {
+    endGame(won, reason, finalStreak, bonus) {
       data.games++;
       if (won) data.wins++;
       const c = /gave up/i.test(reason) ? 'gaveUp' : /Time ran out/i.test(reason) ? 'timeout' : /guesses/i.test(reason) ? 'guesses' : 'gemStuck';
       data.causes[c]++;
-      if (won) data.totalScore += 500;
+      if (won) data.totalScore += bonus;
       data.streakSum += finalStreak;
       MILESTONES.forEach((m) => { if (finalStreak >= m) data.milestones[m]++; });
       if (startedAt) data.playMs += Date.now() - startedAt;
@@ -1897,7 +1900,7 @@ const Define = (() => {
     }));
     return groups;
   }
-  async function fetchDefinition(word) {
+  async function fetchOne(word) {
     let reached = false;
     for (const name of [word, word[0].toUpperCase() + word.slice(1)]) {
       try {
@@ -1913,14 +1916,37 @@ const Define = (() => {
     } catch { }
     return reached ? { found: false } : { error: true };
   }
+  function baseForms(w) {
+    const list = [];
+    const add = (b) => { if (b.length >= 3 && b !== w && !list.includes(b)) list.push(b); };
+    const undouble = (b) => (b.length > 3 && b[b.length - 1] === b[b.length - 2] ? b.slice(0, -1) : null);
+    if (/ies$/.test(w)) add(w.slice(0, -3) + 'y');
+    if (/ied$/.test(w)) add(w.slice(0, -3) + 'y');
+    if (/es$/.test(w)) add(w.slice(0, -2));
+    if (/[^s]s$/.test(w)) add(w.slice(0, -1));
+    if (/ed$/.test(w)) { add(w.slice(0, -2)); add(w.slice(0, -1)); const u = undouble(w.slice(0, -2)); if (u) add(u); }
+    if (/ing$/.test(w)) { const stem = w.slice(0, -3); add(stem); add(stem + 'e'); const u = undouble(stem); if (u) add(u); }
+    const known = list.filter((b) => dictionarySet.has(b));
+    return known.concat(list.filter((b) => !dictionarySet.has(b))).slice(0, 3);
+  }
+  async function fetchDefinition(word) {
+    const first = await fetchOne(word);
+    if (first.found || first.error) return first;
+    for (const base of baseForms(word)) {
+      const r = await fetchOne(base);
+      if (r.found) return { ...r, base };
+    }
+    return first;
+  }
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined && text !== null) e.textContent = text; return e; };
   function say(text) { out.replaceChildren(el('p', 'hint', text)); }
   function show(word, res) {
     const inGame = dictionarySet.has(word) && (!strictMode || strictSet.has(word));
     const head = el('div', 'def-word');
-    head.append(el('span', '', res.name || word), el('span', 'def-tag' + (inGame ? ' yes' : ''), inGame ? 'valid in the game' : res.found ? 'accepted through online lookup' : 'not in the game list'));
+    head.append(el('span', '', word), el('span', 'def-tag' + (inGame ? ' yes' : ''), inGame ? 'valid in the game' : res.found ? 'accepted through online lookup' : 'not in the game list'));
     out.replaceChildren(head);
-    if (!res.found) { out.append(el('p', 'hint', 'No definition was found for this word. Check the spelling, or try the base form (for example "walk" instead of "walked").')); return; }
+    if (!res.found) { out.append(el('p', 'hint', 'No definition was found for this word.')); return; }
+    if (res.base) out.append(el('p', 'hint', 'No entry for \u201c' + word + '\u201d, so this is the entry for \u201c' + res.base + '\u201d.'));
     res.groups.forEach((g) => {
       out.append(el('div', 'def-pos', g.pos || 'word'));
       const ol = el('ol', 'def-list');

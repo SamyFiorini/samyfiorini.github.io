@@ -481,6 +481,7 @@ body.previewing .sea, body.previewing .light, body.previewing .sea-structure { t
 .sheet .hint { font-size: 12.5px; line-height: 1.5; color: var(--dim); }
 .sheet .hint + .hint { margin-top: 0; }
 .toggle.big { font-size: 15px; color: var(--foam); }
+.toggle .rec { font-style: normal; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--pyrite); margin-left: 6px; }
 .slider { display: grid; grid-template-columns: 74px minmax(0, 1fr) 30px; align-items: center; gap: 12px; font-size: 13px; color: var(--mist); }
 .slider output { font-family: var(--mono); font-size: 11.5px; text-align: right; color: var(--dim); }
 .slider input[type=range], .slider input[type=range]::-webkit-slider-runnable-track { -webkit-appearance: none; appearance: none; }
@@ -672,8 +673,9 @@ details.mix .mix-body .toggle { margin-top: 8px; }
 
 .field { position: relative; flex: 1; min-width: 0; }
 .mirror { display: none; position: absolute; inset: 0; padding: 8px 6px; text-align: center; font-family: var(--serif); font-size: 29px; letter-spacing: .03em; line-height: normal; color: var(--foam); white-space: nowrap; overflow: hidden; pointer-events: none; transition: opacity .3s; }
-.field.virtual .mirror { display: block; }
-.field.virtual #player-input { color: transparent; caret-color: transparent; }
+.field.virtual .mirror { display: block; position: relative; inset: auto; border-bottom: 1px solid transparent; white-space: normal; overflow-wrap: anywhere; word-break: break-all; overflow: visible; }
+.mirror::before { content: '\200b'; }
+.field.virtual #player-input { position: absolute; inset: 0; height: 100%; color: transparent; caret-color: transparent; }
 #player-input:disabled + .mirror { opacity: .4; }
 .mirror .caret { display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -0.12em; background: var(--pyrite); opacity: 0; }
 .field.virtual .mirror .caret { animation: blink 1s steps(1) infinite; }
